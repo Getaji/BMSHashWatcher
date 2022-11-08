@@ -25,7 +25,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class Main extends Application {
-    public static final String APP_VERSION = "0.1.0";
+    public static final String APP_VERSION = "0.1.1";
 
     private static Main INSTANCE;
 
