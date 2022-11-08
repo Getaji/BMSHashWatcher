@@ -1,3 +1,5 @@
+package com.getaji.bmshashwatcher;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;

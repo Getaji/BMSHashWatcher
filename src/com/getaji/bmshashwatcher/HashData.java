@@ -1,3 +1,5 @@
+package com.getaji.bmshashwatcher;
+
 public class HashData {
     private String title;
     private String md5Hash;

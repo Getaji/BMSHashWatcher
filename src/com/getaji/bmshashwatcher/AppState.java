@@ -1,3 +1,5 @@
+package com.getaji.bmshashwatcher;
+
 public class AppState {
     private boolean isCopyWithThisAppJustBefore = false;
     private boolean isFirstBoot = false;

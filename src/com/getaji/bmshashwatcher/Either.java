@@ -1,3 +1,5 @@
+package com.getaji.bmshashwatcher;
+
 import java.util.function.Consumer;
 
 public class Either<L, R> {

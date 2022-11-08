@@ -1,3 +1,5 @@
+package com.getaji.bmshashwatcher;
+
 import java.sql.SQLException;
 
 public interface SongDataAccessor {
