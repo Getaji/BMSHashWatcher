@@ -20,15 +20,6 @@ public class WebService {
         NONE,
     }
 
-    public WebService(String title) {
-        this(title, "", "");
-    }
-
-    public WebService(String title, String md5UrlPattern) {
-        this.title = title;
-        this.md5UrlPattern = md5UrlPattern;
-    }
-
     @JsonCreator
     public WebService(
             @JsonProperty("title") String title,
@@ -72,17 +63,19 @@ public class WebService {
     @JsonIgnore
     public Either<String, String> getURL(HashData data) {
         switch (getSupportedHashType()) {
-            case MD5:
+            case MD5 -> {
                 if (data.getMD5Hash().equals("")) {
                     return Either.left("md5 is null");
                 }
                 return Either.right(md5UrlPattern.replace("%s", data.getMD5Hash()));
-            case SHA256:
+            }
+            case SHA256 -> {
                 if (data.getSHA256Hash().equals("")) {
                     return Either.left("sha256 is null");
                 }
                 return Either.right(sha256UrlPattern.replace("%s", data.getSHA256Hash()));
-            case MD5_AND_SHA256:
+            }
+            case MD5_AND_SHA256 -> {
                 if (data.getMD5Hash().equals("") && data.getSHA256Hash().equals("")) {
                     return Either.left("hash is null");
                 }
@@ -90,8 +83,8 @@ public class WebService {
                     return Either.right(md5UrlPattern.replace("%s", data.getMD5Hash()));
                 }
                 return Either.right(sha256UrlPattern.replace("%s", data.getSHA256Hash()));
-            default:
-                throw new IllegalStateException("illegal WebPage supported hash type");
+            }
+            default -> throw new IllegalStateException("illegal WebPage supported hash type");
         }
     }
 

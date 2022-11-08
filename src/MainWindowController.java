@@ -57,18 +57,11 @@ public class MainWindowController {
         contextMenu.getItems().forEach(item -> {
             // なんとかして
             switch (Optional.ofNullable(item.getId()).orElse("")) {
-                case "contextMenu-itemCopyMD5Hash":
-                case "contextMenu-itemBrowseLR2IR":
-                    item.setDisable(hashData.getMD5Hash().equals(""));
-                    break;
-                case "contextMenu-itemCopySHA256Hash":
-                case "contextMenu-itemBrowseMocha-Repository":
-                case "contextMenu-itemBrowseMinIR":
-                case "contextMenu-itemBrowseCinnamon":
-                    item.setDisable(hashData.getSHA256Hash().equals(""));
-                    break;
-                default:
-                    item.setDisable(false);
+                case "contextMenu-itemCopyMD5Hash", "contextMenu-itemBrowseLR2IR" ->
+                        item.setDisable(hashData.getMD5Hash().equals(""));
+                case "contextMenu-itemCopySHA256Hash", "contextMenu-itemBrowseMocha-Repository", "contextMenu-itemBrowseMinIR", "contextMenu-itemBrowseCinnamon" ->
+                        item.setDisable(hashData.getSHA256Hash().equals(""));
+                default -> item.setDisable(false);
             }
         });
     }
@@ -80,28 +73,26 @@ public class MainWindowController {
         config.getWebServiceList().forEach(webService -> {
             final MenuItem item = new MenuItem(webService.getTitle() + "で開く");
             item.setId("contextMenu-itemBrowse" + webService.getTitle());
-            item.setOnAction(ev -> {
-                hashTableView.getSelectionModel().getSelectedItems()
-                        .forEach(webService::browse);
-            });
+            item.setOnAction(ev -> hashTableView.getSelectionModel().getSelectedItems()
+                    .forEach(webService::browse));
             menuItems.add(item);
         });
 
         final MenuItem itemBrowseAll = new MenuItem("すべてのサービスで開く");
-        itemBrowseAll.setOnAction(ev -> {
-            hashTableView.getSelectionModel().getSelectedItems().forEach(hashData -> {
+        itemBrowseAll.setOnAction(ev ->
+            hashTableView.getSelectionModel().getSelectedItems().forEach(hashData ->
                 config.getWebServiceList().forEach(
                         webService -> webService.browse(hashData)
-                );
-            });
-        });
+                )
+            )
+        );
         menuItems.add(itemBrowseAll);
 
         menuItems.add(new SeparatorMenuItem());
 
         final MenuItem itemCopyTitle = new MenuItem("タイトルをコピー");
         itemCopyTitle.setId("contextMenu-itemCopyTitle");
-        itemCopyTitle.setOnAction(ev -> {
+        itemCopyTitle.setOnAction(ev ->
             Optional.ofNullable(hashTableView.getSelectionModel().getSelectedItem()).ifPresent(
                     hashData -> {
                         final ClipboardContent content = new ClipboardContent();
@@ -109,13 +100,13 @@ public class MainWindowController {
                         appState.setCopyWithThisAppJustBefore(true);
                         Clipboard.getSystemClipboard().setContent(content);
                     }
-            );
-        });
+            )
+        );
         menuItems.add(itemCopyTitle);
 
         final MenuItem itemCopyMD5 = new MenuItem("MD5ハッシュをコピー");
         itemCopyMD5.setId("contextMenu-itemCopyMD5Hash");
-        itemCopyMD5.setOnAction(ev -> {
+        itemCopyMD5.setOnAction(ev ->
             Optional.ofNullable(hashTableView.getSelectionModel().getSelectedItem()).ifPresent(
                     hashData -> {
                         final ClipboardContent content = new ClipboardContent();
@@ -123,13 +114,13 @@ public class MainWindowController {
                         appState.setCopyWithThisAppJustBefore(true);
                         Clipboard.getSystemClipboard().setContent(content);
                     }
-            );
-        });
+            )
+        );
         menuItems.add(itemCopyMD5);
 
         final MenuItem itemCopySHA256 = new MenuItem("SHA256ハッシュをコピー");
         itemCopySHA256.setId("contextMenu-itemCopySHA256Hash");
-        itemCopySHA256.setOnAction(ev -> {
+        itemCopySHA256.setOnAction(ev ->
             Optional.ofNullable(hashTableView.getSelectionModel().getSelectedItem()).ifPresent(
                     hashData -> {
                         final ClipboardContent content = new ClipboardContent();
@@ -137,8 +128,8 @@ public class MainWindowController {
                         appState.setCopyWithThisAppJustBefore(true);
                         Clipboard.getSystemClipboard().setContent(content);
                     }
-            );
-        });
+            )
+        );
         menuItems.add(itemCopySHA256);
 
         hashTableView.setContextMenu(contextMenu);

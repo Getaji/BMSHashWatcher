@@ -79,6 +79,7 @@ public class Main extends Application {
                 final File selectedDirectory = directoryChooser.showDialog(primaryStage.getOwner());
                 if (selectedDirectory == null) {
                     Platform.exit();
+                    return;
                 }
                 final Path dbPath = selectedDirectory.toPath().resolve("songdata.db");
                 if (!Files.exists(dbPath)) {
@@ -101,7 +102,7 @@ public class Main extends Application {
 
     private void onCompleteSongDataPolling(SongDataAccessor.Result result) {
         final ObservableList<HashData> hashDataList = controller.getHashTableView().getItems();
-        final SongData songData = result.getSongData();
+        final SongData songData = result.songData();
         final List<Integer> restDataIndices = new ArrayList<>();
         boolean isFound = false;
 
@@ -110,16 +111,16 @@ public class Main extends Application {
 
             // すでに更新済みの場合は重複を削除する準備
             if (isFound) {
-                switch (result.getHashType()) {
+                switch (result.hashType()) {
                     case MD5 -> {
                         if (!hashData.getSHA256Hash().equals("")
-                                && hashData.getSHA256Hash().equals(songData.getSha256())) {
+                                && hashData.getSHA256Hash().equals(songData.sha256())) {
                             restDataIndices.add(i);
                         }
                     }
                     case SHA256 -> {
                         if (!hashData.getMD5Hash().equals("")
-                                && hashData.getMD5Hash().equals(songData.getMd5())) {
+                                && hashData.getMD5Hash().equals(songData.md5())) {
                             restDataIndices.add(i);
                         }
                     }
@@ -129,14 +130,14 @@ public class Main extends Application {
 
             // 更新済みでない
             if (
-                    (result.getHashType() == HashData.HashType.MD5 && hashData.getMD5Hash().equals(result.getHash()))
-                            || result.getHashType() == HashData.HashType.SHA256 && hashData.getSHA256Hash().equals(result.getHash())
+                    (result.hashType() == HashData.HashType.MD5 && hashData.getMD5Hash().equals(result.hash()))
+                            || result.hashType() == HashData.HashType.SHA256 && hashData.getSHA256Hash().equals(result.hash())
             ) {
                 if (songData == null) {
                     hashDataList.set(i, new HashData("未登録のBMS", hashData.getMD5Hash(), hashData.getSHA256Hash()));
                     break;
                 } else {
-                    hashDataList.set(i, new HashData(songData.getTitleFull(), songData.getMd5(), songData.getSha256()));
+                    hashDataList.set(i, new HashData(songData.getTitleFull(), songData.md5(), songData.sha256()));
                     isFound = true;
                 }
             }
@@ -177,7 +178,7 @@ public class Main extends Application {
             if (sha256.isPresent()) {
                 hashData.setSHA56Hash(sha256.get());
                 songDataPoller.poll(HashData.HashType.SHA256, sha256.get());
-            } else if (md5.isPresent()) {
+            } else {
                 hashData.setMD5Hash(md5.get());
                 songDataPoller.poll(HashData.HashType.MD5, md5.get());
             }
@@ -188,10 +189,5 @@ public class Main extends Application {
             // sqliteドライバが見つからなかった
             throw new RuntimeException(e);
         }
-    }
-
-    @FunctionalInterface
-    interface Poller {
-        void poll() throws SQLException, ClassNotFoundException;
     }
 }

@@ -68,27 +68,6 @@ public class SongDataAccessor {
         return new Result(HashData.HashType.SHA256, hash, songData);
     }
 
-    public class Result {
-        private final HashData.HashType hashType;
-        private final String hash;
-        private final SongData songData;
-
-        public Result(HashData.HashType hashType, String hash, SongData songData) {
-            this.hashType = hashType;
-            this.hash = hash;
-            this.songData = songData;
-        }
-
-        public HashData.HashType getHashType() {
-            return hashType;
-        }
-
-        public String getHash() {
-            return hash;
-        }
-
-        public SongData getSongData() {
-            return songData;
-        }
+    public record Result(HashData.HashType hashType, String hash, SongData songData) {
     }
 }

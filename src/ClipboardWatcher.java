@@ -18,10 +18,6 @@ public class ClipboardWatcher {
     private boolean isRunning = false;
     private final List<Consumer<String>> callbacks;
 
-    public ClipboardWatcher() {
-        this(1000);
-    }
-
     public ClipboardWatcher(long delay) {
         this.delay = delay;
         this.callbacks = new ArrayList<>();

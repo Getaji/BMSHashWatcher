@@ -11,7 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class Config {
-    private final List<WebService> webServiceList = new ArrayList<>();
+    private List<WebService> webServiceList = new ArrayList<>();
 
     private String beatorajaPath = "";
 
@@ -21,8 +21,7 @@ public class Config {
     }
 
     public void setWebServiceList(List<WebService> list) {
-        webServiceList.clear();
-        webServiceList.addAll(list);
+        webServiceList = list;
     }
 
     @JsonProperty("beatorajaPath")
@@ -40,9 +39,8 @@ public class Config {
             // TODO validate
             final String text = Files.readString(file.toPath());
             final ObjectMapper objectMapper = new ObjectMapper();
-            final Config config = objectMapper.readValue(text, new TypeReference<>() {
+            return objectMapper.readValue(text, new TypeReference<>() {
             });
-            return config;
         } else {
             final Config config = new Config();
             Collections.addAll(
