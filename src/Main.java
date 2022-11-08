@@ -23,6 +23,8 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class Main extends Application {
+    public static final String APP_VERSION = "0.1.0";
+
     private static Main INSTANCE;
 
     private final Config config;
@@ -76,7 +78,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) {
         INSTANCE = this;
 
-        primaryStage.setTitle("BMS Hash Watcher v0.1.0-alpha");
+        primaryStage.setTitle("BMS Hash Watcher v" + APP_VERSION);
 
         final FXMLLoader rootLoader = new FXMLLoader(getClass().getResource("MainWindow.fxml"));
         final Parent root;
