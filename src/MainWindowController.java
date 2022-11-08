@@ -8,6 +8,8 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.ContextMenuEvent;
 
+import java.text.SimpleDateFormat;
+import java.time.LocalTime;
 import java.util.Optional;
 
 public class MainWindowController {
@@ -147,7 +149,8 @@ public class MainWindowController {
     }
 
     public void setMessage(MessageType type, String message) {
-        bottomMessageLabel.setText(message);
+        final String time = new SimpleDateFormat("HH:mm:ss").format(LocalTime.now());
+        bottomMessageLabel.setText("[" + time + "] " + message);
         final String color;
         switch (type) {
             case INFO -> color = "transparent";

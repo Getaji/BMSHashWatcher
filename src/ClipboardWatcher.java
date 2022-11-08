@@ -25,12 +25,9 @@ public class ClipboardWatcher {
             @Override
             public void run() {
                 try {
-                    getClipboard();
+                    updateClipboard();
                 } catch (IllegalStateException e) {
-                    System.err.println("[ERROR]クリップボードが利用できない");
-                } catch (IOException e) {
-                    System.err.println("[ERROR]このデータは文字列にできない");
-                } catch (Exception e) {
+                    Main.getInstance().getController().error("クリップボードを参照できません");
                     e.printStackTrace();
                 }
             }
@@ -43,26 +40,26 @@ public class ClipboardWatcher {
     }
 
     public void start() {
-        if (isRunning) {
-            throw new IllegalStateException("ClipboardWatcherは既に実行中です");
-        }
+        if (isRunning) return;
         isRunning = true;
         timer.schedule(timerTask, 0, delay);
     }
 
     public void stop() {
-        if (!isRunning) {
-            throw new IllegalStateException("ClipboardWatcherは既に停止中です");
-        }
+        if (!isRunning) return;
         isRunning = false;
         timer.cancel();
     }
 
-    private void getClipboard() throws IOException, IllegalStateException {
+    /**
+     * クリップボードのデータを取得し、変更があったら更新する
+     * @throws IllegalStateException クリップボードが利用できない
+     */
+    private void updateClipboard() throws IllegalStateException {
         final String data;
         try {
             data = clipboard.getData(DataFlavor.stringFlavor).toString();
-        } catch (UnsupportedFlavorException e) {
+        } catch (UnsupportedFlavorException | IOException e) {
             // 画像データなど文字列に変換できないタイプのデータは無視
             return;
         }

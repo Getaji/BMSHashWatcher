@@ -33,8 +33,15 @@ public class Config {
         this.beatorajaPath = beatorajaPath;
     }
 
+    /**
+     * 設定をファイルから読み込んでConfigインスタンスを構築する
+     * @param pathname 設定ファイルの絶対パス
+     * @return 構築したConfig
+     * @throws IOException ファイルの読み込みまたは書き込みに失敗
+     */
     public static Config load(String pathname) throws IOException {
         final File file = new File(pathname);
+
         if (file.exists()) {
             // TODO validate
             final String text = Files.readString(file.toPath());

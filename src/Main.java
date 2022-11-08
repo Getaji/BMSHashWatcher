@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class Main extends Application {
+    private static Main INSTANCE;
+
     private final Config config;
     private final ClipboardWatcher clipboardWatcher;
     private final SongDataPoller songDataPoller;
@@ -27,17 +29,22 @@ public class Main extends Application {
 
     private MainWindowController controller;
 
-    public Main() {
+    public Main() throws IOException {
         try {
             config = Config.load("./config.json");
         } catch (IOException e) {
-            // TODO
-            throw new RuntimeException(e);
+            final Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("エラー");
+            alert.setHeaderText(
+                    "設定ファイル(config.json)を作成または読み込みできません。アクセス権限を確認してください"
+            );
+            alert.showAndWait();
+            Platform.exit();
+            throw e;
         }
+
         appState = new AppState();
-
         clipboardWatcher = new ClipboardWatcher(1000);
-
         songDataPoller = new SongDataPoller(config);
     }
 
@@ -46,11 +53,18 @@ public class Main extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) throws Exception {
+    public void start(Stage primaryStage) {
+        INSTANCE = this;
+
         primaryStage.setTitle("BMS Hash Watcher v0.1.0-alpha");
 
         final FXMLLoader rootLoader = new FXMLLoader(getClass().getResource("MainWindow.fxml"));
-        final Parent root = rootLoader.load();
+        final Parent root;
+        try {
+            root = rootLoader.load();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         final Scene scene = new Scene(root);
         primaryStage.setScene(scene);
 
@@ -92,12 +106,24 @@ public class Main extends Application {
                     continue;
                 }
                 config.setBeatorajaPath(selectedDirectory.getAbsolutePath());
-                Config.save("./config.json", config);
+                try {
+                    Config.save("./config.json", config);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    final Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                    errorAlert.setTitle("エラー");
+                    errorAlert.setHeaderText(
+                            "設定ファイル(config.json)を保存できません。アクセス権限を確認してください"
+                    );
+                    errorAlert.showAndWait();
+                }
                 break;
             }
         }
 
         clipboardWatcher.start();
+
+        controller.info("起動完了");
     }
 
     private void onCompleteSongDataPolling(SongDataAccessor.Result result) {
@@ -174,20 +200,23 @@ public class Main extends Application {
 
         // 楽曲データを取得
         final HashData hashData = new HashData("取得中…");
-        try {
-            if (sha256.isPresent()) {
-                hashData.setSHA56Hash(sha256.get());
-                songDataPoller.poll(HashData.HashType.SHA256, sha256.get());
-            } else {
-                hashData.setMD5Hash(md5.get());
-                songDataPoller.poll(HashData.HashType.MD5, md5.get());
-            }
-            hashDataList.add(0, hashData);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
-            // sqliteドライバが見つからなかった
-            throw new RuntimeException(e);
+
+        if (sha256.isPresent()) {
+            hashData.setSHA56Hash(sha256.get());
+            songDataPoller.poll(HashData.HashType.SHA256, sha256.get());
+        } else {
+            hashData.setMD5Hash(md5.get());
+            songDataPoller.poll(HashData.HashType.MD5, md5.get());
         }
+
+        hashDataList.add(0, hashData);
+    }
+
+    public MainWindowController getController() {
+        return controller;
+    }
+
+    public static Main getInstance() {
+        return INSTANCE;
     }
 }

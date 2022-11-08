@@ -1,3 +1,6 @@
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -30,7 +33,7 @@ public class SongDataPoller {
         this.consumer = consumer;
     }
 
-    public void poll(HashData.HashType type, String hash) throws SQLException, ClassNotFoundException {
+    public void poll(HashData.HashType type, String hash) {
         executorService.submit(() -> {
             try {
                 accessor.open(config);
@@ -40,15 +43,25 @@ public class SongDataPoller {
                     case MD5 -> songData = accessor.findBMSByMD5(hash);
                     case SHA256 -> songData = accessor.findBMSBySHA256(hash);
                     default ->
-                            throw new IllegalArgumentException("不明なハッシュタイプ: " + type);
+                            throw new IllegalArgumentException("不明なハッシュタイプ: " + type.toString());
                 }
                 if (consumer != null) {
                     consumer.accept(songData);
                 }
             } catch (SQLException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
+                Main.getInstance().getController().error(
+                        "データベースにアクセスできません。ファイルの有無やアクセス権限を確認してください"
+                );
             } catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
+                final Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("内部エラー");
+                alert.setHeaderText(
+                        "データベースにアクセスするための機能が破損しています"
+                );
+                alert.showAndWait();
+                Platform.exit();
             }
         });
     }

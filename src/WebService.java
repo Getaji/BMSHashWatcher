@@ -84,7 +84,7 @@ public class WebService {
                 }
                 return Either.right(sha256UrlPattern.replace("%s", data.getSHA256Hash()));
             }
-            default -> throw new IllegalStateException("illegal WebPage supported hash type");
+            default -> throw new IllegalStateException("illegal WebService supported hash type");
         }
     }
 
@@ -107,7 +107,10 @@ public class WebService {
             try {
                 Desktop.getDesktop().browse(URI.create(url));
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                Main.getInstance().getController().error(
+                        "ブラウザを開けません。OSの既定のブラウザ構成などを確認してください"
+                );
+                e.printStackTrace();
             }
         });
     }
