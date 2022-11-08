@@ -23,6 +23,9 @@ public class MainWindowController {
     @FXML
     private TableColumn<HashData, String> sha256HashColumn;
 
+    @FXML
+    private Label bottomMessageLabel;
+
     private AppState appState;
 
     private ContextMenu contextMenu;
@@ -141,5 +144,9 @@ public class MainWindowController {
 
     public void setAppState(AppState appState) {
         this.appState = appState;
+    }
+
+    public void setBottomMessage(String message) {
+        bottomMessageLabel.setText(message);
     }
 }
