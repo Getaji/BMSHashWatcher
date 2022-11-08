@@ -99,7 +99,6 @@ public class MainWindowController {
     }
 
     public void bind(MainWindowModel model) {
-        bottomMessageLabel.textProperty().bindBidirectional(model.messageProperty());
     }
 
     public void constructContextMenu(Config config) {
@@ -181,7 +180,6 @@ public class MainWindowController {
 
     public void setMessage(MessageType type, String message) {
         final String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-        bottomMessageLabel.setText("[" + time + "] " + message);
         final String color;
         switch (type) {
             case INFO -> color = "transparent";
@@ -189,7 +187,10 @@ public class MainWindowController {
             case ERROR -> color = "#FFCCCC";
             default -> throw new IllegalArgumentException("type \"" + type + "\"");
         }
-        bottomMessageLabel.setStyle("-fx-background-color: " + color);
+        Platform.runLater(() -> {
+            bottomMessageLabel.setText("[" + time + "] " + message);
+            bottomMessageLabel.setStyle("-fx-background-color: " + color);
+        });
     }
 
     public void info(String message) {
