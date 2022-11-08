@@ -148,7 +148,7 @@ public class Main extends Application {
             }
         }
         for (int i = restDataIndices.size() - 1; i >= 0; i--) {
-            hashDataList.remove(i);
+            hashDataList.remove(i, i + 1);
         }
     }
 
