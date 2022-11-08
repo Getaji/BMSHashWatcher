@@ -10,7 +10,10 @@ import java.sql.*;
 public class SongDataAccessor {
     private Connection connection;
 
-    public void open(Config config) throws SQLException, ClassNotFoundException {
+    public void open(Config config) throws SQLException, ClassNotFoundException, IllegalStateException {
+        if (config.getBeatorajaPath().equals("")) {
+            throw new IllegalStateException("beatorajaのパスが設定されていません");
+        }
         if (connection != null) return;
         Class.forName("org.sqlite.JDBC");
         final SQLiteConfig sqliteConfig = new SQLiteConfig();
