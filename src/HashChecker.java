@@ -3,7 +3,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HashChecker {
-    private HashChecker() {}
+    private HashChecker() {
+    }
 
     public static final Pattern PATTERN_MD5 = Pattern.compile("^[a-f\\d]{32}$", Pattern.CASE_INSENSITIVE);
     public static final Pattern PATTERN_SHA256 = Pattern.compile("^[a-fA-F\\d]{64}$");

@@ -1,22 +1,13 @@
-import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.geometry.Side;
 import javafx.scene.control.*;
-import javafx.scene.control.Button;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuItem;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.ContextMenuEvent;
-import javafx.scene.layout.VBox;
 
-import java.awt.*;
-import java.io.IOException;
-import java.net.URI;
 import java.util.Optional;
 
 public class MainWindowController {
@@ -91,7 +82,7 @@ public class MainWindowController {
             item.setId("contextMenu-itemBrowse" + webService.getTitle());
             item.setOnAction(ev -> {
                 hashTableView.getSelectionModel().getSelectedItems()
-                                .forEach(webService::browse);
+                        .forEach(webService::browse);
             });
             menuItems.add(item);
         });

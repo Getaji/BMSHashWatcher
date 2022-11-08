@@ -1,8 +1,6 @@
 import java.sql.SQLException;
-import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 
 /**
@@ -41,7 +39,8 @@ public class SongDataPoller {
                 switch (type) {
                     case MD5 -> songData = accessor.findBMSByMD5(hash);
                     case SHA256 -> songData = accessor.findBMSBySHA256(hash);
-                    default -> throw new IllegalArgumentException("不明なハッシュタイプ: " + type.toString());
+                    default ->
+                            throw new IllegalArgumentException("不明なハッシュタイプ: " + type);
                 }
                 if (consumer != null) {
                     consumer.accept(songData);

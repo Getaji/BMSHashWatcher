@@ -1,5 +1,4 @@
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -7,13 +6,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class Config {
-    private List<WebService> webServiceList = new ArrayList<>();
+    private final List<WebService> webServiceList = new ArrayList<>();
 
     private String beatorajaPath = "";
 
@@ -42,7 +40,8 @@ public class Config {
             // TODO validate
             final String text = Files.readString(file.toPath());
             final ObjectMapper objectMapper = new ObjectMapper();
-            final Config config = objectMapper.readValue(text, new TypeReference<>() {});
+            final Config config = objectMapper.readValue(text, new TypeReference<>() {
+            });
             return config;
         } else {
             final Config config = new Config();

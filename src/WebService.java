@@ -18,7 +18,6 @@ public class WebService {
         SHA256,
         MD5_AND_SHA256,
         NONE,
-        ;
     }
 
     public WebService(String title) {

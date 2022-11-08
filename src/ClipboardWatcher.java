@@ -1,4 +1,3 @@
-import javax.swing.FocusManager;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
@@ -15,7 +14,7 @@ public class ClipboardWatcher {
     private final TimerTask timerTask;
     private final Timer timer;
     private String value = "";
-    private long delay;
+    private final long delay;
     private boolean isRunning = false;
     private final List<Consumer<String>> callbacks;
 
