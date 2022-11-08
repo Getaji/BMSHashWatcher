@@ -70,55 +70,9 @@ public class Main extends Application {
 
         primaryStage.show();
 
-        songDataPoller.setConsumer(result -> {
-            final SongData songData = result.getSongData();
-            final List<Integer> restDataIndices = new ArrayList<>();
-            boolean isFound = false;
+        songDataPoller.setConsumer(this::onCompleteSongDataPolling);
 
-            for (int i = 0; i < hashDataList.size(); i++) {
-                final HashData hashData = hashDataList.get(i);
-
-                // すでに更新済みの場合は重複を削除する準備
-                if (isFound) {
-                    switch (result.getHashType()) {
-                        case MD5 -> {
-                            if (!hashData.getSHA256Hash().equals("")
-                                    && hashData.getSHA256Hash().equals(songData.getSha256())) {
-                                restDataIndices.add(i);
-                            }
-                        }
-                        case SHA256 -> {
-                            if (!hashData.getMD5Hash().equals("")
-                                    && hashData.getMD5Hash().equals(songData.getMd5())) {
-                                restDataIndices.add(i);
-                            }
-                        }
-                    }
-                    continue;
-                }
-
-                // 更新済みでない
-                if (
-                        (result.getHashType() == HashData.HashType.MD5 && hashData.getMD5Hash().equals(result.getHash()))
-                        || result.getHashType() == HashData.HashType.SHA256 && hashData.getSHA256Hash().equals(result.getHash())
-                ) {
-                    if (songData == null) {
-                        hashDataList.set(i, new HashData("未登録のBMS", hashData.getMD5Hash(), hashData.getSHA256Hash()));
-                        break;
-                    } else {
-                        hashDataList.set(i, new HashData(songData.getTitleFull(), songData.getMd5(), songData.getSha256()));
-                        isFound = true;
-                    }
-                }
-            }
-            for (int i = restDataIndices.size() - 1; i >= 0; i--) {
-                hashDataList.remove(i);
-            }
-        });
-
-        clipboardWatcher.addCallback((value) -> {
-            onUpdateClipboard(value);
-        });
+        clipboardWatcher.addCallback(this::onUpdateClipboard);
 
         if (config.getBeatorajaPath().equals("")) {
             final Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -149,6 +103,53 @@ public class Main extends Application {
         }
 
         clipboardWatcher.start();
+    }
+
+    private void onCompleteSongDataPolling(SongDataAccessor.Result result) {
+        final ObservableList<HashData> hashDataList = controller.getHashTableView().getItems();
+        final SongData songData = result.getSongData();
+        final List<Integer> restDataIndices = new ArrayList<>();
+        boolean isFound = false;
+
+        for (int i = 0; i < hashDataList.size(); i++) {
+            final HashData hashData = hashDataList.get(i);
+
+            // すでに更新済みの場合は重複を削除する準備
+            if (isFound) {
+                switch (result.getHashType()) {
+                    case MD5 -> {
+                        if (!hashData.getSHA256Hash().equals("")
+                                && hashData.getSHA256Hash().equals(songData.getSha256())) {
+                            restDataIndices.add(i);
+                        }
+                    }
+                    case SHA256 -> {
+                        if (!hashData.getMD5Hash().equals("")
+                                && hashData.getMD5Hash().equals(songData.getMd5())) {
+                            restDataIndices.add(i);
+                        }
+                    }
+                }
+                continue;
+            }
+
+            // 更新済みでない
+            if (
+                    (result.getHashType() == HashData.HashType.MD5 && hashData.getMD5Hash().equals(result.getHash()))
+                            || result.getHashType() == HashData.HashType.SHA256 && hashData.getSHA256Hash().equals(result.getHash())
+            ) {
+                if (songData == null) {
+                    hashDataList.set(i, new HashData("未登録のBMS", hashData.getMD5Hash(), hashData.getSHA256Hash()));
+                    break;
+                } else {
+                    hashDataList.set(i, new HashData(songData.getTitleFull(), songData.getMd5(), songData.getSha256()));
+                    isFound = true;
+                }
+            }
+        }
+        for (int i = restDataIndices.size() - 1; i >= 0; i--) {
+            hashDataList.remove(i);
+        }
     }
 
     private void onUpdateClipboard(String value) {
