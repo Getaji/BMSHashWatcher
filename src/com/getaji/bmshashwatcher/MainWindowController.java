@@ -17,7 +17,7 @@ import java.util.Optional;
 
 public class MainWindowController {
     @FXML
-    private  CheckMenuItem menuItemToggleWatchClipboard;
+    private CheckMenuItem menuItemToggleWatchClipboard;
 
     @FXML
     private TableView<HashData> hashTableView;
@@ -116,11 +116,11 @@ public class MainWindowController {
 
         final MenuItem itemBrowseAll = new MenuItem("すべてのサービスで開く");
         itemBrowseAll.setOnAction(ev ->
-            hashTableView.getSelectionModel().getSelectedItems().forEach(hashData ->
-                config.getWebServiceList().forEach(
-                        webService -> webService.browse(hashData)
+                hashTableView.getSelectionModel().getSelectedItems().forEach(hashData ->
+                        config.getWebServiceList().forEach(
+                                webService -> webService.browse(hashData)
+                        )
                 )
-            )
         );
         menuItems.add(itemBrowseAll);
 
@@ -129,42 +129,42 @@ public class MainWindowController {
         final MenuItem itemCopyTitle = new MenuItem("タイトルをコピー");
         itemCopyTitle.setId("contextMenu-itemCopyTitle");
         itemCopyTitle.setOnAction(ev ->
-            Optional.ofNullable(hashTableView.getSelectionModel().getSelectedItem()).ifPresent(
-                    hashData -> {
-                        final ClipboardContent content = new ClipboardContent();
-                        content.putString(hashData.getTitle());
-                        appState.setCopyWithThisAppJustBefore(true);
-                        Clipboard.getSystemClipboard().setContent(content);
-                    }
-            )
+                Optional.ofNullable(hashTableView.getSelectionModel().getSelectedItem()).ifPresent(
+                        hashData -> {
+                            final ClipboardContent content = new ClipboardContent();
+                            content.putString(hashData.getTitle());
+                            appState.setCopyWithThisAppJustBefore(true);
+                            Clipboard.getSystemClipboard().setContent(content);
+                        }
+                )
         );
         menuItems.add(itemCopyTitle);
 
         final MenuItem itemCopyMD5 = new MenuItem("MD5ハッシュをコピー");
         itemCopyMD5.setId("contextMenu-itemCopyMD5Hash");
         itemCopyMD5.setOnAction(ev ->
-            Optional.ofNullable(hashTableView.getSelectionModel().getSelectedItem()).ifPresent(
-                    hashData -> {
-                        final ClipboardContent content = new ClipboardContent();
-                        content.putString(hashData.getMD5Hash());
-                        appState.setCopyWithThisAppJustBefore(true);
-                        Clipboard.getSystemClipboard().setContent(content);
-                    }
-            )
+                Optional.ofNullable(hashTableView.getSelectionModel().getSelectedItem()).ifPresent(
+                        hashData -> {
+                            final ClipboardContent content = new ClipboardContent();
+                            content.putString(hashData.getMD5Hash());
+                            appState.setCopyWithThisAppJustBefore(true);
+                            Clipboard.getSystemClipboard().setContent(content);
+                        }
+                )
         );
         menuItems.add(itemCopyMD5);
 
         final MenuItem itemCopySHA256 = new MenuItem("SHA256ハッシュをコピー");
         itemCopySHA256.setId("contextMenu-itemCopySHA256Hash");
         itemCopySHA256.setOnAction(ev ->
-            Optional.ofNullable(hashTableView.getSelectionModel().getSelectedItem()).ifPresent(
-                    hashData -> {
-                        final ClipboardContent content = new ClipboardContent();
-                        content.putString(hashData.getSHA256Hash());
-                        appState.setCopyWithThisAppJustBefore(true);
-                        Clipboard.getSystemClipboard().setContent(content);
-                    }
-            )
+                Optional.ofNullable(hashTableView.getSelectionModel().getSelectedItem()).ifPresent(
+                        hashData -> {
+                            final ClipboardContent content = new ClipboardContent();
+                            content.putString(hashData.getSHA256Hash());
+                            appState.setCopyWithThisAppJustBefore(true);
+                            Clipboard.getSystemClipboard().setContent(content);
+                        }
+                )
         );
         menuItems.add(itemCopySHA256);
 

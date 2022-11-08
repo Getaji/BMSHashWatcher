@@ -76,6 +76,10 @@ public class Main extends Application {
         Application.launch();
     }
 
+    public static Main getInstance() {
+        return INSTANCE;
+    }
+
     @Override
     public void start(Stage primaryStage) {
         INSTANCE = this;
@@ -151,6 +155,7 @@ public class Main extends Application {
      * 正しいディレクトリが選択されるまでループする
      * 正しいディレクトリが選択された場合は設定を保存する
      * キャンセルされた場合は打ち切る
+     *
      * @param owner ダイアログのオーナーウィンドウ
      */
     public void chooseDBDir(SongDataAccessor accessor, Window owner) {
@@ -343,10 +348,6 @@ public class Main extends Application {
 
     public ClipboardWatcher getClipboardWatcher() {
         return clipboardWatcher;
-    }
-
-    public static Main getInstance() {
-        return INSTANCE;
     }
 
     public void setEnableClipboardWatcher(boolean isEnable) {

@@ -57,6 +57,7 @@ public class ClipboardWatcher {
 
     /**
      * クリップボードのデータを取得し、変更があったら更新する
+     *
      * @throws IllegalStateException クリップボードが利用できない
      */
     private void updateClipboard() throws IllegalStateException {
