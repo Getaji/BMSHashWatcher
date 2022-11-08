@@ -10,6 +10,10 @@ import java.sql.*;
 public class SongDataAccessor {
     private Connection connection;
 
+    public boolean isOpen() {
+        return connection != null;
+    }
+
     public void open(Config config) throws SQLException, ClassNotFoundException, IllegalStateException {
         if (config.getBeatorajaPath().equals("")) {
             throw new IllegalStateException("beatorajaのパスが設定されていません");

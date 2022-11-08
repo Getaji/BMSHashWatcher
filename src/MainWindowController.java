@@ -7,6 +7,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.ContextMenuEvent;
+import javafx.stage.Stage;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalTime;
@@ -14,6 +15,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 public class MainWindowController {
+    @FXML
+    private  CheckMenuItem menuItemToggleWatchClipboard;
+
     @FXML
     private TableView<HashData> hashTableView;
 
@@ -33,8 +37,13 @@ public class MainWindowController {
 
     private ContextMenu contextMenu;
 
+    private Stage primaryStage;
+
     @FXML
     public void initialize() {
+        menuItemToggleWatchClipboard.setSelected(
+                Main.getInstance().getConfig().isEnableWatchClipboard()
+        );
         hashTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
         md5HashColumn.setCellValueFactory(
@@ -43,6 +52,23 @@ public class MainWindowController {
         sha256HashColumn.setCellValueFactory(
                 data -> new SimpleStringProperty(data.getValue().getSHA256Hash())
         );
+    }
+
+    @FXML
+    public void onActionChooseBeatorajaDir() {
+        Main.getInstance().chooseBeatorajaDir(primaryStage);
+        info("beatorajaのディレクトリを選択しました");
+    }
+
+    @FXML
+    public void onActionToggleWatchClipboard() {
+        if (menuItemToggleWatchClipboard.isSelected()) {
+            Main.getInstance().getClipboardWatcher().start();
+            info("クリップボードの監視を開始しました");
+        } else {
+            Main.getInstance().getClipboardWatcher().stop();
+            info("クリップボードの監視を停止しました");
+        }
     }
 
     @FXML
@@ -70,6 +96,10 @@ public class MainWindowController {
                 default -> item.setDisable(false);
             }
         });
+    }
+
+    public void bind(MainWindowModel model) {
+        bottomMessageLabel.textProperty().bindBidirectional(model.messageProperty());
     }
 
     public void constructContextMenu(Config config) {
@@ -172,6 +202,18 @@ public class MainWindowController {
 
     public void error(String message) {
         setMessage(MessageType.ERROR, message);
+    }
+
+    public Stage getPrimaryStage() {
+        return primaryStage;
+    }
+
+    public void setPrimaryStage(Stage primaryStage) {
+        this.primaryStage = primaryStage;
+    }
+
+    public void setEnableWatchClipboard(boolean isEnable) {
+        menuItemToggleWatchClipboard.setSelected(isEnable);
     }
 
     public enum MessageType {

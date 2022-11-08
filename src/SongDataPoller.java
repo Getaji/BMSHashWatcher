@@ -12,15 +12,13 @@ import java.util.function.Consumer;
 public class SongDataPoller {
     private final SongDataAccessor accessor = new SongDataAccessor();
     private final ExecutorService executorService;
-    private final Config config;
     private Consumer<SongDataAccessor.Result> consumer;
 
-    public SongDataPoller(Config config) {
-        this(config, null);
+    public SongDataPoller() {
+        this(null);
     }
 
-    public SongDataPoller(Config config, Consumer<SongDataAccessor.Result> consumer) {
-        this.config = config;
+    public SongDataPoller(Consumer<SongDataAccessor.Result> consumer) {
         this.consumer = consumer;
         executorService = Executors.newCachedThreadPool(r -> {
             final Thread thread = new Thread(r);
@@ -36,7 +34,7 @@ public class SongDataPoller {
     public void poll(HashData.HashType type, String hash) {
         executorService.submit(() -> {
             try {
-                accessor.open(config);
+                accessor.open(Main.getInstance().getConfig());
                 SongDataAccessor.Result songData;
                 // TODO: アローはJava SE 12以降らしい
                 switch (type) {
@@ -64,5 +62,9 @@ public class SongDataPoller {
                 Platform.exit();
             }
         });
+    }
+
+    public SongDataAccessor getSongDataAccessor() {
+        return accessor;
     }
 }

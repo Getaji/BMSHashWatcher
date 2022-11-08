@@ -6,6 +6,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.TableView;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -15,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +25,7 @@ public class Main extends Application {
     private static Main INSTANCE;
 
     private final Config config;
+
     private final ClipboardWatcher clipboardWatcher;
     private final SongDataPoller songDataPoller;
     private final AppState appState;
@@ -50,7 +53,7 @@ public class Main extends Application {
         }
 
         clipboardWatcher = new ClipboardWatcher(1000);
-        songDataPoller = new SongDataPoller(config);
+        songDataPoller = new SongDataPoller();
     }
 
     public static void main(String[] args) {
@@ -76,6 +79,7 @@ public class Main extends Application {
         controller = rootLoader.getController();
         controller.setAppState(appState);
         controller.constructContextMenu(config);
+        controller.setPrimaryStage(primaryStage);
 
         final TableView<HashData> tableView = controller.getHashTableView();
         final ObservableList<HashData> hashDataList = FXCollections.observableArrayList();
@@ -95,7 +99,33 @@ public class Main extends Application {
             chooseBeatorajaDir(primaryStage.getOwner());
         }
 
-        clipboardWatcher.start();
+        if (appState.isFirstBoot()) {
+            final Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("確認");
+            alert.setHeaderText("クリップボードの監視を開始しますか？");
+            Optional<ButtonType> confirmResult = alert.showAndWait();
+            config.setEnableWatchClipboard(confirmResult.isPresent());
+
+            try {
+                Config.save("./config.json", config);
+            } catch (IOException e) {
+                e.printStackTrace();
+                final Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+                errorAlert.setTitle("エラー");
+                errorAlert.setHeaderText(
+                        "設定ファイル(config.json)を保存できません。アクセス権限を確認してください"
+                );
+                errorAlert.showAndWait();
+                Platform.exit();
+                return;
+            }
+        }
+
+        controller.setEnableWatchClipboard(config.isEnableWatchClipboard());
+
+        if (config.isEnableWatchClipboard()) {
+            clipboardWatcher.start();
+        }
 
         controller.info("起動完了");
     }
@@ -107,11 +137,14 @@ public class Main extends Application {
      * キャンセルされた場合は打ち切る
      * @param owner ダイアログのオーナーウィンドウ
      */
-    private void chooseBeatorajaDir(Window owner) {
+    public void chooseBeatorajaDir(Window owner) {
         while (true) {
             // ダイアログ表示
             final DirectoryChooser directoryChooser = new DirectoryChooser();
             directoryChooser.setTitle("beatorajaのディレクトリを選択");
+            if (!config.getBeatorajaPath().equals("")) {
+                directoryChooser.setInitialDirectory(new File(config.getBeatorajaPath()));
+            }
             final File selectedDirectory = directoryChooser.showDialog(owner);
 
             // キャンセルしたら打ち切り
@@ -131,8 +164,17 @@ public class Main extends Application {
                 continue;
             }
 
+            final boolean isRestartDBConnectionRequired = songDataPoller.getSongDataAccessor().isOpen()
+                    && !config.getBeatorajaPath().equals("")
+                    && !config.getBeatorajaPath().equals(selectedDirectory.getAbsolutePath());
             config.setBeatorajaPath(selectedDirectory.getAbsolutePath());
-
+            if (isRestartDBConnectionRequired && songDataPoller.getSongDataAccessor().isOpen()) {
+                try {
+                    songDataPoller.getSongDataAccessor().close();
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             try {
                 Config.save("./config.json", config);
             } catch (IOException e) {
@@ -143,6 +185,7 @@ public class Main extends Application {
                         "設定ファイル(config.json)を保存できません。アクセス権限を確認してください"
                 );
                 errorAlert.showAndWait();
+                Platform.exit();
             }
 
             break;
@@ -241,8 +284,16 @@ public class Main extends Application {
         hashDataList.add(0, hashData);
     }
 
+    public Config getConfig() {
+        return config;
+    }
+
     public MainWindowController getController() {
         return controller;
+    }
+
+    public ClipboardWatcher getClipboardWatcher() {
+        return clipboardWatcher;
     }
 
     public static Main getInstance() {

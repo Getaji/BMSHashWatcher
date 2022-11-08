@@ -15,6 +15,8 @@ public class Config {
 
     private String beatorajaPath = "";
 
+    private boolean enableWatchClipboard = false;
+
     @JsonProperty("webServiceList")
     public List<WebService> getWebServiceList() {
         return webServiceList;
@@ -31,6 +33,15 @@ public class Config {
 
     public void setBeatorajaPath(String beatorajaPath) {
         this.beatorajaPath = beatorajaPath;
+    }
+
+    @JsonProperty("enableWatchClipboard")
+    public boolean isEnableWatchClipboard() {
+        return enableWatchClipboard;
+    }
+
+    public void setEnableWatchClipboard(boolean enableWatchClipboard) {
+        this.enableWatchClipboard = enableWatchClipboard;
     }
 
     /**

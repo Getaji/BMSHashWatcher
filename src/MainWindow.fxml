@@ -33,6 +33,7 @@
 -->
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.CheckMenuItem?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
@@ -49,11 +50,17 @@
       <menus>
         <Menu mnemonicParsing="false" text="メニュー(_M)">
           <items>
-                  <MenuItem mnemonicParsing="false" onAction="#onActionClearList" text="リストをクリア" />
+                  <MenuItem mnemonicParsing="false" onAction="#onActionChooseBeatorajaDir" text="beatorajaのフォルダを選択" />
             <SeparatorMenuItem mnemonicParsing="false" />
             <MenuItem mnemonicParsing="false" onAction="#onActionQuit" text="終了" />
           </items>
         </Menu>
+            <Menu mnemonicParsing="false" text="ツール(_T)">
+              <items>
+                  <CheckMenuItem fx:id="menuItemToggleWatchClipboard" mnemonicParsing="false" onAction="#onActionToggleWatchClipboard" text="クリップボードを監視" />
+                  <MenuItem mnemonicParsing="false" onAction="#onActionClearList" text="リストをクリア" />
+              </items>
+            </Menu>
       </menus>
     </MenuBar>
     <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" VBox.vgrow="ALWAYS">
