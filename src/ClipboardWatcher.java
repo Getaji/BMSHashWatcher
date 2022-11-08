@@ -11,8 +11,8 @@ import java.util.function.Consumer;
 
 public class ClipboardWatcher {
     private final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-    private final TimerTask timerTask;
-    private final Timer timer;
+    private TimerTask timerTask;
+    private Timer timer;
     private String value = "";
     private final long delay;
     private boolean isRunning = false;
@@ -21,6 +21,14 @@ public class ClipboardWatcher {
     public ClipboardWatcher(long delay) {
         this.delay = delay;
         this.callbacks = new ArrayList<>();
+    }
+
+    public void addCallback(Consumer<String> callback) {
+        callbacks.add(callback);
+    }
+
+    public void start() {
+        if (isRunning) return;
         timerTask = new TimerTask() {
             @Override
             public void run() {
@@ -33,22 +41,16 @@ public class ClipboardWatcher {
             }
         };
         timer = new Timer(true);
-    }
-
-    public void addCallback(Consumer<String> callback) {
-        callbacks.add(callback);
-    }
-
-    public void start() {
-        if (isRunning) return;
-        isRunning = true;
         timer.schedule(timerTask, 0, delay);
+        isRunning = true;
     }
 
     public void stop() {
         if (!isRunning) return;
-        isRunning = false;
         timer.cancel();
+        timer = null;
+        timerTask = null;
+        isRunning = false;
     }
 
     /**
