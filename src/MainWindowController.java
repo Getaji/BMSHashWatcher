@@ -10,6 +10,7 @@ import javafx.scene.input.ContextMenuEvent;
 
 import java.text.SimpleDateFormat;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 public class MainWindowController {
@@ -149,7 +150,7 @@ public class MainWindowController {
     }
 
     public void setMessage(MessageType type, String message) {
-        final String time = new SimpleDateFormat("HH:mm:ss").format(LocalTime.now());
+        final String time = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
         bottomMessageLabel.setText("[" + time + "] " + message);
         final String color;
         switch (type) {
