@@ -12,14 +12,6 @@ public class WebService {
     private String md5UrlPattern;
     private String sha256UrlPattern;
 
-    @JsonIgnoreType
-    public enum SupportedHashType {
-        MD5,
-        SHA256,
-        MD5_AND_SHA256,
-        NONE,
-    }
-
     @JsonCreator
     public WebService(
             @JsonProperty("title") String title,

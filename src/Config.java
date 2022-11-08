@@ -15,6 +15,8 @@ public class Config {
 
     private String beatorajaPath = "";
 
+    private String lr2Path = "";
+
     private boolean enableWatchClipboard = false;
 
     @JsonProperty("webServiceList")
@@ -33,6 +35,15 @@ public class Config {
 
     public void setBeatorajaPath(String beatorajaPath) {
         this.beatorajaPath = beatorajaPath;
+    }
+
+    @JsonProperty("lr2Path")
+    public String getLr2Path() {
+        return lr2Path;
+    }
+
+    public void setLr2Path(String lr2Path) {
+        this.lr2Path = lr2Path;
     }
 
     @JsonProperty("enableWatchClipboard")

@@ -10,15 +10,16 @@ import java.util.function.Consumer;
  * 楽曲データをCachedThreadPoolで取得するクラス
  */
 public class SongDataPoller {
-    private final SongDataAccessor accessor = new SongDataAccessor();
+    private final SongDataAccessor accessor;
     private final ExecutorService executorService;
     private Consumer<SongDataAccessor.Result> consumer;
 
-    public SongDataPoller() {
-        this(null);
+    public SongDataPoller(SongDataAccessor accessor) {
+        this(accessor, null);
     }
 
-    public SongDataPoller(Consumer<SongDataAccessor.Result> consumer) {
+    public SongDataPoller(SongDataAccessor accessor, Consumer<SongDataAccessor.Result> consumer) {
+        this.accessor = accessor;
         this.consumer = consumer;
         executorService = Executors.newCachedThreadPool(r -> {
             final Thread thread = new Thread(r);
@@ -27,21 +28,23 @@ public class SongDataPoller {
         });
     }
 
-    public void setConsumer(Consumer<SongDataAccessor.Result> consumer) {
+    public void setConsumer(Consumer<BeatorajaSongDataAccessor.Result> consumer) {
         this.consumer = consumer;
     }
 
     public void poll(HashData.HashType type, String hash) {
+        if (!accessor.isSupportHashType(type)) {
+            throw new IllegalArgumentException("このpollerは" + type + "をサポートしていません");
+        }
         executorService.submit(() -> {
             try {
                 accessor.open(Main.getInstance().getConfig());
                 SongDataAccessor.Result songData;
-                // TODO: アローはJava SE 12以降らしい
                 switch (type) {
                     case MD5 -> songData = accessor.findBMSByMD5(hash);
                     case SHA256 -> songData = accessor.findBMSBySHA256(hash);
                     default ->
-                            throw new IllegalArgumentException("不明なハッシュタイプ: " + type.toString());
+                            throw new IllegalArgumentException("不明なハッシュタイプ: " + type);
                 }
                 if (consumer != null) {
                     consumer.accept(songData);

@@ -61,6 +61,12 @@ public class MainWindowController {
     }
 
     @FXML
+    public void onActionChooseLR2Dir() {
+        Main.getInstance().chooseLR2Dir(primaryStage);
+        info("LR2のディレクトリを選択しました");
+    }
+
+    @FXML
     public void onActionToggleWatchClipboard() {
         if (menuItemToggleWatchClipboard.isSelected()) {
             Main.getInstance().getClipboardWatcher().start();

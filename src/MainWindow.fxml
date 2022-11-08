@@ -51,6 +51,7 @@
         <Menu mnemonicParsing="false" text="メニュー(_M)">
           <items>
                   <MenuItem mnemonicParsing="false" onAction="#onActionChooseBeatorajaDir" text="beatorajaのフォルダを選択" />
+                  <MenuItem mnemonicParsing="false" onAction="#onActionChooseLR2Dir" text="LR2のフォルダを選択" />
             <SeparatorMenuItem mnemonicParsing="false" />
             <MenuItem mnemonicParsing="false" onAction="#onActionQuit" text="終了" />
           </items>

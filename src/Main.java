@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class Main extends Application {
     private static Main INSTANCE;
@@ -27,7 +28,9 @@ public class Main extends Application {
     private final Config config;
 
     private final ClipboardWatcher clipboardWatcher;
-    private final SongDataPoller songDataPoller;
+    private final SongDataAccessor beatorajaSongDataAccessor;
+    private final SongDataAccessor lr2SongDataAccessor;
+    private final SongDataPollingController songDataPollingController;
     private final AppState appState;
 
     private MainWindowController controller;
@@ -53,7 +56,16 @@ public class Main extends Application {
         }
 
         clipboardWatcher = new ClipboardWatcher(1000);
-        songDataPoller = new SongDataPoller();
+        beatorajaSongDataAccessor = new BeatorajaSongDataAccessor();
+        lr2SongDataAccessor = new LR2SongDataAccessor();
+        songDataPollingController = new SongDataPollingController();
+
+        if (!config.getBeatorajaPath().equals("")) {
+            songDataPollingController.addAccessor(beatorajaSongDataAccessor);
+        }
+        if (!config.getLr2Path().equals("")) {
+            songDataPollingController.addAccessor(lr2SongDataAccessor);
+        }
     }
 
     public static void main(String[] args) {
@@ -87,19 +99,19 @@ public class Main extends Application {
 
         primaryStage.show();
 
-        songDataPoller.setConsumer(this::onCompleteSongDataPolling);
+        songDataPollingController.setConsumer(this::onCompleteSongDataPolling);
 
         clipboardWatcher.addCallback(this::onUpdateClipboard);
 
-        if (config.getBeatorajaPath().equals("")) {
-            final Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("初期設定");
-            alert.setHeaderText("beatorajaのディレクトリを指定してください\nキャンセルすると楽曲データを取得せずに動作します");
-            alert.showAndWait();
-            chooseBeatorajaDir(primaryStage.getOwner());
+        if (appState.isFirstBoot()) {
         }
 
         if (appState.isFirstBoot()) {
+            final Alert alertInfo = new Alert(Alert.AlertType.INFORMATION);
+            alertInfo.setTitle("案内");
+            alertInfo.setHeaderText("beatorajaまたはLR2のBMSデータを参照する場合、ファイルメニューからそれぞれのルートフォルダを選択してください");
+            alertInfo.showAndWait();
+
             final Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
             alert.setTitle("確認");
             alert.setHeaderText("クリップボードの監視を開始しますか？");
@@ -137,23 +149,42 @@ public class Main extends Application {
      * キャンセルされた場合は打ち切る
      * @param owner ダイアログのオーナーウィンドウ
      */
-    public void chooseBeatorajaDir(Window owner) {
+    public void chooseDBDir(SongDataAccessor accessor, Window owner) {
+        final String name;
+        final String currentPath;
+        final String dbPathRelative;
+        final Consumer<String> setPath;
+
+        if (accessor == beatorajaSongDataAccessor) {
+            name = "beatoraja";
+            currentPath = config.getBeatorajaPath();
+            dbPathRelative = "songdata.db";
+            setPath = config::setBeatorajaPath;
+        } else if (accessor == lr2SongDataAccessor) {
+            name = "LR2";
+            currentPath = config.getLr2Path();
+            dbPathRelative = "LR2files/Database/song.db";
+            setPath = config::setLr2Path;
+        } else {
+            throw new IllegalArgumentException();
+        }
+
         while (true) {
             // ダイアログ表示
             final DirectoryChooser directoryChooser = new DirectoryChooser();
-            directoryChooser.setTitle("beatorajaのディレクトリを選択");
-            if (!config.getBeatorajaPath().equals("")) {
-                directoryChooser.setInitialDirectory(new File(config.getBeatorajaPath()));
+            directoryChooser.setTitle(name + "のディレクトリを選択");
+            if (!currentPath.equals("")) {
+                directoryChooser.setInitialDirectory(new File(currentPath));
             }
             final File selectedDirectory = directoryChooser.showDialog(owner);
 
             // キャンセルしたら打ち切り
             if (selectedDirectory == null) {
-                break;
+                return;
             }
 
             // ディレクトリの確認
-            final Path dbPath = selectedDirectory.toPath().resolve("songdata.db");
+            final Path dbPath = selectedDirectory.toPath().resolve(dbPathRelative);
             if (!Files.exists(dbPath)) {
                 final Alert errorAlert = new Alert(Alert.AlertType.ERROR);
                 errorAlert.setTitle("エラー");
@@ -164,17 +195,18 @@ public class Main extends Application {
                 continue;
             }
 
-            final boolean isRestartDBConnectionRequired = songDataPoller.getSongDataAccessor().isOpen()
-                    && !config.getBeatorajaPath().equals("")
-                    && !config.getBeatorajaPath().equals(selectedDirectory.getAbsolutePath());
-            config.setBeatorajaPath(selectedDirectory.getAbsolutePath());
-            if (isRestartDBConnectionRequired && songDataPoller.getSongDataAccessor().isOpen()) {
+            // accessorが開かれていてDBのパスが変更された場合は閉じる
+            final boolean isRestartDBConnectionRequired = accessor.isOpen()
+                    && !currentPath.equals(selectedDirectory.getAbsolutePath());
+            setPath.accept(selectedDirectory.getAbsolutePath());
+            if (isRestartDBConnectionRequired && accessor.isOpen()) {
                 try {
-                    songDataPoller.getSongDataAccessor().close();
+                    accessor.close();
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
             }
+
             try {
                 Config.save("./config.json", config);
             } catch (IOException e) {
@@ -192,9 +224,23 @@ public class Main extends Application {
         }
     }
 
-    private void onCompleteSongDataPolling(SongDataAccessor.Result result) {
+    public void chooseBeatorajaDir(Window owner) {
+        chooseDBDir(beatorajaSongDataAccessor, owner);
+        if (!songDataPollingController.getAccessors().contains(beatorajaSongDataAccessor)) {
+            songDataPollingController.addAccessor(0, beatorajaSongDataAccessor);
+        }
+    }
+
+    public void chooseLR2Dir(Window owner) {
+        chooseDBDir(lr2SongDataAccessor, owner);
+        if (!songDataPollingController.getAccessors().contains(lr2SongDataAccessor)) {
+            songDataPollingController.addAccessor(lr2SongDataAccessor);
+        }
+    }
+
+    private void onCompleteSongDataPolling(SongDataPollingController.Result result) {
         final ObservableList<HashData> hashDataList = controller.getHashTableView().getItems();
-        final SongData songData = result.songData();
+        final SongData songData = result.data().songData();
         final List<Integer> restDataIndices = new ArrayList<>();
         boolean isFound = false;
 
@@ -203,7 +249,7 @@ public class Main extends Application {
 
             // すでに更新済みの場合は重複を削除する準備
             if (isFound) {
-                switch (result.hashType()) {
+                switch (result.data().hashType()) {
                     case MD5 -> {
                         if (!hashData.getSHA256Hash().equals("")
                                 && hashData.getSHA256Hash().equals(songData.sha256())) {
@@ -222,8 +268,8 @@ public class Main extends Application {
 
             // 更新済みでない
             if (
-                    (result.hashType() == HashData.HashType.MD5 && hashData.getMD5Hash().equals(result.hash()))
-                            || result.hashType() == HashData.HashType.SHA256 && hashData.getSHA256Hash().equals(result.hash())
+                    (result.data().hashType() == HashData.HashType.MD5 && hashData.getMD5Hash().equals(result.data().hash()))
+                            || result.data().hashType() == HashData.HashType.SHA256 && hashData.getSHA256Hash().equals(result.data().hash())
             ) {
                 if (songData == null) {
                     hashDataList.set(i, new HashData("未登録のBMS", hashData.getMD5Hash(), hashData.getSHA256Hash()));
@@ -253,20 +299,19 @@ public class Main extends Application {
 
         final ObservableList<HashData> hashDataList = controller.getHashTableView().getItems();
 
-        // 既存のリストを検索し、存在すれば一番上に移動して処理打ち切り
+        // 既存のリストを検索し、存在すれば一番上に移動
         for (HashData hashData : hashDataList) {
             if ((sha256.isPresent() && hashData.getSHA256Hash().equals(sha256.get()))
                     || (md5.isPresent() && hashData.getMD5Hash().equals(md5.get()))
             ) {
                 hashDataList.remove(hashData);
                 hashDataList.add(0, hashData);
-                return;
             }
         }
 
         // 楽曲データを取得
 
-        if (config.getBeatorajaPath().equals("")) {
+        if (songDataPollingController.getPollers().size() == 0) {
             hashDataList.add(0, new HashData("不明のBMS"));
             return;
         }
@@ -275,10 +320,10 @@ public class Main extends Application {
 
         if (sha256.isPresent()) {
             hashData.setSHA56Hash(sha256.get());
-            songDataPoller.poll(HashData.HashType.SHA256, sha256.get());
+            songDataPollingController.poll(HashData.HashType.SHA256, sha256.get());
         } else {
             hashData.setMD5Hash(md5.get());
-            songDataPoller.poll(HashData.HashType.MD5, md5.get());
+            songDataPollingController.poll(HashData.HashType.MD5, md5.get());
         }
 
         hashDataList.add(0, hashData);
