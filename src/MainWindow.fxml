@@ -67,9 +67,9 @@
             </TableView>
       </children>
     </AnchorPane>
-      <Label fx:id="bottomMessageLabel" text="Label">
+      <Label fx:id="bottomMessageLabel" prefWidth="25565.0" text="Label" VBox.vgrow="ALWAYS">
          <padding>
-            <Insets bottom="4.0" left="8.0" right="8.0" top="4.0" />
+            <Insets bottom="2.0" left="8.0" right="8.0" top="2.0" />
          </padding>
       </Label>
   </children>

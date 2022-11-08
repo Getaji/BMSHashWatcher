@@ -146,7 +146,33 @@ public class MainWindowController {
         this.appState = appState;
     }
 
-    public void setBottomMessage(String message) {
+    public void setMessage(MessageType type, String message) {
         bottomMessageLabel.setText(message);
+        final String color;
+        switch (type) {
+            case INFO -> color = "transparent";
+            case WARN -> color = "#FFFF90";
+            case ERROR -> color = "#FFCCCC";
+            default -> throw new IllegalArgumentException("type \"" + type + "\"");
+        }
+        bottomMessageLabel.setStyle("-fx-background-color: " + color);
+    }
+
+    public void info(String message) {
+        setMessage(MessageType.INFO, message);
+    }
+
+    public void warn(String message) {
+        setMessage(MessageType.WARN, message);
+    }
+
+    public void error(String message) {
+        setMessage(MessageType.ERROR, message);
+    }
+
+    public enum MessageType {
+        INFO,
+        WARN,
+        ERROR,
     }
 }
