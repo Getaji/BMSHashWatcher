@@ -69,13 +69,7 @@ public class MainWindowController {
 
     @FXML
     public void onActionToggleWatchClipboard() {
-        if (menuItemToggleWatchClipboard.isSelected()) {
-            Main.getInstance().getClipboardWatcher().start();
-            info("クリップボードの監視を開始しました");
-        } else {
-            Main.getInstance().getClipboardWatcher().stop();
-            info("クリップボードの監視を停止しました");
-        }
+        Main.getInstance().setEnableClipboardWatcher(menuItemToggleWatchClipboard.isSelected());
     }
 
     @FXML

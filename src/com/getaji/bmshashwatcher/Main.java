@@ -348,4 +348,27 @@ public class Main extends Application {
     public static Main getInstance() {
         return INSTANCE;
     }
+
+    public void setEnableClipboardWatcher(boolean isEnable) {
+        if (isEnable) {
+            getClipboardWatcher().start();
+            controller.info("クリップボードの監視を開始しました");
+        } else {
+            getClipboardWatcher().stop();
+            controller.info("クリップボードの監視を停止しました");
+        }
+        config.setEnableWatchClipboard(isEnable);
+        try {
+            Config.save("./config.json", config);
+        } catch (IOException e) {
+            e.printStackTrace();
+            final Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+            errorAlert.setTitle("エラー");
+            errorAlert.setHeaderText(
+                    "設定ファイル(config.json)を保存できません。アクセス権限を確認してください"
+            );
+            errorAlert.showAndWait();
+            Platform.exit();
+        }
+    }
 }
