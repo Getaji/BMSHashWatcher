@@ -2,10 +2,7 @@ package com.getaji.bmshashwatcher;
 
 import com.getaji.bmshashwatcher.controller.MainWindowController;
 import com.getaji.bmshashwatcher.controller.PreferenceDialogController;
-import com.getaji.bmshashwatcher.db.BeatorajaSongDataAccessor;
-import com.getaji.bmshashwatcher.db.LR2SongDataAccessor;
-import com.getaji.bmshashwatcher.db.SongDataAccessor;
-import com.getaji.bmshashwatcher.db.SongDataPollingController;
+import com.getaji.bmshashwatcher.db.*;
 import com.getaji.bmshashwatcher.lib.HashChecker;
 import com.getaji.bmshashwatcher.model.*;
 import javafx.application.Application;
@@ -324,7 +321,7 @@ public class Main extends Application {
             }
         }
         for (int i = restDataIndices.size() - 1; i >= 0; i--) {
-            hashDataList.remove(i, i + 1);
+            hashDataList.remove(restDataIndices.get(i), restDataIndices.get(i) + 1);
         }
     }
 
@@ -339,41 +336,36 @@ public class Main extends Application {
             return;
         }
 
-        final Optional<String> sha256 = HashChecker.getSHA256HashPart(value);
-        final Optional<String> md5 = HashChecker.getMD5HashPart(value);
+        final List<String> hashList = HashChecker.getHashPartAll(value);
 
-        if (sha256.isEmpty() && md5.isEmpty()) return;
+        if (hashList.isEmpty()) return;
 
         final ObservableList<BMSHashData> hashDataList = controller.getHashTableView().getItems();
 
-        // 既存のリストを検索し、存在すれば一番上に移動
-        for (BMSHashData hashData : hashDataList) {
-            if ((sha256.isPresent() && hashData.getSHA256Hash().equals(sha256.get()))
-                    || (md5.isPresent() && hashData.getMD5Hash().equals(md5.get()))
-            ) {
-                hashDataList.remove(hashData);
+        hashList.forEach(hash -> {
+            final boolean isMD5Hash = hash.length() == 32;
+            final BMSHashData hashData = new BMSHashData(
+                    "取得中...",
+                    isMD5Hash ? hash : "",
+                    isMD5Hash ? "" : hash
+            );
+
+            if (songDataPollingController.isDisableAll()) {
+                hashData.setTitle("不明のBMS");
                 hashDataList.add(0, hashData);
+                return;
             }
-        }
 
-        // 楽曲データを取得
+            if (isMD5Hash) {
+                hashData.setMD5Hash(hash);
+                songDataPollingController.poll(BMSHashData.HashType.MD5, hash);
+            } else {
+                hashData.setSHA56Hash(hash);
+                songDataPollingController.poll(BMSHashData.HashType.SHA256, hash);
+            }
 
-        if (songDataPollingController.getPollers().size() == 0) {
-            hashDataList.add(0, new BMSHashData("不明のBMS"));
-            return;
-        }
-
-        final BMSHashData hashData = new BMSHashData("取得中...");
-
-        if (sha256.isPresent()) {
-            hashData.setSHA56Hash(sha256.get());
-            songDataPollingController.poll(BMSHashData.HashType.SHA256, sha256.get());
-        } else {
-            hashData.setMD5Hash(md5.get());
-            songDataPollingController.poll(BMSHashData.HashType.MD5, md5.get());
-        }
-
-        hashDataList.add(0, hashData);
+            hashDataList.add(0, hashData);
+        });
     }
 
     public Config getConfig() {
