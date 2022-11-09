@@ -57,14 +57,16 @@ public class MainWindowController {
 
     @FXML
     public void onActionChooseBeatorajaDir() {
-        Main.getInstance().chooseBeatorajaDir(primaryStage);
-        info("beatorajaのディレクトリを選択しました");
+        if (Main.getInstance().chooseBeatorajaDir(primaryStage)) {
+            info("beatorajaのディレクトリを選択しました");
+        }
     }
 
     @FXML
     public void onActionChooseLR2Dir() {
-        Main.getInstance().chooseLR2Dir(primaryStage);
-        info("LR2のディレクトリを選択しました");
+        if (Main.getInstance().chooseLR2Dir(primaryStage)) {
+            info("LR2のディレクトリを選択しました");
+        }
     }
 
     @FXML

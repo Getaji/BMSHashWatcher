@@ -178,8 +178,9 @@ public class Main extends Application {
      * キャンセルされた場合は打ち切る
      *
      * @param owner ダイアログのオーナーウィンドウ
+     * @return 選択したか
      */
-    public void chooseDBDir(SongDataAccessor accessor, Window owner) {
+    public boolean chooseDBDir(SongDataAccessor accessor, Window owner) {
         final String name;
         final String currentPath;
         final String dbPathRelative;
@@ -210,7 +211,7 @@ public class Main extends Application {
 
             // キャンセルしたら打ち切り
             if (selectedDirectory == null) {
-                return;
+                return false;
             }
 
             // ディレクトリの確認
@@ -239,22 +240,24 @@ public class Main extends Application {
 
             trySaveConfig();
 
-            break;
+            return true;
         }
     }
 
-    public void chooseBeatorajaDir(Window owner) {
-        chooseDBDir(beatorajaSongDataAccessor, owner);
+    public boolean chooseBeatorajaDir(Window owner) {
+        final boolean isChose = chooseDBDir(beatorajaSongDataAccessor, owner);
         if (!songDataPollingController.getAccessors().contains(beatorajaSongDataAccessor)) {
             songDataPollingController.addAccessor(0, beatorajaSongDataAccessor);
         }
+        return isChose;
     }
 
-    public void chooseLR2Dir(Window owner) {
-        chooseDBDir(lr2SongDataAccessor, owner);
+    public boolean chooseLR2Dir(Window owner) {
+        final boolean isChose = chooseDBDir(lr2SongDataAccessor, owner);
         if (!songDataPollingController.getAccessors().contains(lr2SongDataAccessor)) {
             songDataPollingController.addAccessor(lr2SongDataAccessor);
         }
+        return isChose;
     }
 
     private void onCompleteSongDataPolling(SongDataPollingController.Result result) {
