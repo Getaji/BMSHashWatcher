@@ -12,6 +12,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * アプリケーションの設定を管理するクラス
+ * Jacksonで変換可能
+ */
 public class Config {
     private List<WebService> webServiceList = new ArrayList<>();
 
@@ -109,6 +113,12 @@ public class Config {
         }
     }
 
+    /**
+     * 設定をファイルに保存する
+     * @param pathname ファイルのパス
+     * @param config 設定
+     * @throws IOException 書き込みに失敗
+     */
     public static void save(String pathname, Config config) throws IOException {
         final ObjectMapper objectMapper = new ObjectMapper();
         final String text = objectMapper.writeValueAsString(config);

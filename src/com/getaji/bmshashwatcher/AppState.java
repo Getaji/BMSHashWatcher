@@ -1,5 +1,9 @@
 package com.getaji.bmshashwatcher;
 
+/**
+ * アプリケーションの状態を管理するクラス
+ * Configに保存しないものがここで管理される
+ */
 public class AppState {
     private boolean isCopyWithThisAppJustBefore = false;
     private boolean isFirstBoot = false;

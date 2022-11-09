@@ -54,7 +54,7 @@ public class WebService {
     }
 
     @JsonIgnore
-    public Either<String, String> getURL(HashData data) {
+    public Either<String, String> getURL(BMSHashData data) {
         switch (getSupportedHashType()) {
             case MD5 -> {
                 if (data.getMD5Hash().equals("")) {
@@ -95,8 +95,8 @@ public class WebService {
         return SupportedHashType.NONE;
     }
 
-    public void browse(HashData hashData) {
-        getURL(hashData).consumeRight(url -> {
+    public void browse(BMSHashData hashData) {
+        getURL(hashData).ifRight(url -> {
             try {
                 Desktop.getDesktop().browse(URI.create(url));
             } catch (IOException e) {

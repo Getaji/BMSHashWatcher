@@ -2,6 +2,7 @@ package com.getaji.bmshashwatcher;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -29,8 +30,8 @@ public class SongDataPollingController {
             for (int i = pollerIndex + 1; i < pollers.size(); i++) {
                 final SongDataPoller nextPoller = pollers.get(i);
 
-                // ハッシュタイプをサポートしていなければ次へ
-                if (nextPoller.getSongDataAccessor().isSupportHashType(result.hashType())) {
+                // 有効状態かつハッシュタイプをサポートしていれば実行
+                if (nextPoller.isEnable() && nextPoller.getSongDataAccessor().isSupportHashType(result.hashType())) {
                     nextPoller.poll(result.hashType(), result.hash());
                     return;
                 }
@@ -41,14 +42,27 @@ public class SongDataPollingController {
         return poller;
     }
 
-    public void addAccessor(SongDataAccessor accessor) {
+    public SongDataPoller addAccessor(SongDataAccessor accessor) {
         accessors.add(accessor);
-        pollers.add(createPoller(accessor));
+        final SongDataPoller poller = createPoller(accessor);
+        pollers.add(poller);
+        return poller;
     }
 
-    public void addAccessor(int index, SongDataAccessor accessor) {
+    public SongDataPoller addAccessor(int index, SongDataAccessor accessor) {
         accessors.add(index, accessor);
-        pollers.add(index, createPoller(accessor));
+        final SongDataPoller poller = createPoller(accessor);
+        pollers.add(index, poller);
+        return poller;
+    }
+
+    public Optional<SongDataPoller> getPoller(SongDataAccessor accessor) {
+        for (final SongDataPoller poller : pollers) {
+            if (poller.getSongDataAccessor() == accessor) {
+                return Optional.of(poller);
+            }
+        }
+        return Optional.empty();
     }
 
     public List<SongDataAccessor> getAccessors() {
@@ -71,11 +85,16 @@ public class SongDataPollingController {
         this.consumer = consumer;
     }
 
-    public void poll(HashData.HashType type, String hash) {
+    public void poll(BMSHashData.HashType type, String hash) {
         if (pollers.size() == 0) {
             throw new IllegalStateException("pollerが登録されていません");
         }
-        pollers.get(0).poll(type, hash);
+        for (final SongDataPoller poller : pollers) {
+            if (poller.isEnable()) {
+                poller.poll(type, hash);
+                break;
+            }
+        }
     }
 
     record Result(SongDataAccessor accessor, SongDataAccessor.Result data) {

@@ -36,7 +36,7 @@ public class SongDataPoller {
         this.consumer = consumer;
     }
 
-    public void poll(HashData.HashType type, String hash) {
+    public void poll(BMSHashData.HashType type, String hash) {
         if (!accessor.isSupportHashType(type)) {
             throw new IllegalArgumentException("このpollerは" + type + "をサポートしていません");
         }

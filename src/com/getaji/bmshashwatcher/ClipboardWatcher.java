@@ -11,6 +11,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Consumer;
 
+/**
+ * クリップボードを監視するクラス
+ * 値を保持し、新たな値が文字列かつ異なる値なら状態を更新して通知する
+ */
 public class ClipboardWatcher {
     private final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
     private TimerTask timerTask;
@@ -18,17 +22,29 @@ public class ClipboardWatcher {
     private String value = "";
     private final long delay;
     private boolean isRunning = false;
-    private final List<Consumer<String>> callbacks;
+    private Consumer<String> callback;
 
+    /**
+     * 監視間隔を指定してインスタンスを作成する
+     * @param delay 監視間隔（ミリ秒）
+     */
     public ClipboardWatcher(long delay) {
         this.delay = delay;
-        this.callbacks = new ArrayList<>();
     }
 
-    public void addCallback(Consumer<String> callback) {
-        callbacks.add(callback);
+    /**
+     * クリップボードのデータが更新された時に呼び出される関数を設定する
+     * データを文字列に変換できない、またはデータに変更がない場合は呼び出されない
+     * @param callback 関数
+     */
+    public void setCallback(Consumer<String> callback) {
+        this.callback = callback;
     }
 
+    /**
+     * クリップボードの監視を開始する
+     * 既に開始している場合は何も起こらない
+     */
     public void start() {
         if (isRunning) return;
         timerTask = new TimerTask() {
@@ -47,6 +63,9 @@ public class ClipboardWatcher {
         isRunning = true;
     }
 
+    /**
+     * クリップボードの監視を停止する
+     */
     public void stop() {
         if (!isRunning) return;
         timer.cancel();
@@ -70,10 +89,14 @@ public class ClipboardWatcher {
         }
         if (!data.equals(value)) {
             value = data;
-            this.callbacks.forEach((consumer) -> consumer.accept(data));
+            if (callback != null) callback.accept(data);
         }
     }
 
+    /**
+     * クリップボードを監視中か
+     * @return
+     */
     public boolean isRunning() {
         return isRunning;
     }

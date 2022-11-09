@@ -1,23 +1,26 @@
 package com.getaji.bmshashwatcher;
 
-public class HashData {
+/**
+ * BMSハッシュのデータを管理するクラス（変更可能）
+ */
+public class BMSHashData {
     private String title;
     private String md5Hash;
     private String sha256Hash;
 
-    public HashData() {
+    public BMSHashData() {
         this("", "", "");
     }
 
-    public HashData(String title) {
+    public BMSHashData(String title) {
         this(title, "", "");
     }
 
-    public HashData(String title, String md5Hash) {
+    public BMSHashData(String title, String md5Hash) {
         this(title, md5Hash, "");
     }
 
-    public HashData(String title, String md5Hash, String sha256Hash) {
+    public BMSHashData(String title, String md5Hash, String sha256Hash) {
         this.title = title;
         this.md5Hash = md5Hash;
         this.sha256Hash = sha256Hash;

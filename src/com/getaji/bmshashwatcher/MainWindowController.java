@@ -20,16 +20,16 @@ public class MainWindowController {
     private CheckMenuItem menuItemToggleWatchClipboard;
 
     @FXML
-    private TableView<HashData> hashTableView;
+    private TableView<BMSHashData> hashTableView;
 
     @FXML
-    private TableColumn<HashData, String> titleColumn;
+    private TableColumn<BMSHashData, String> titleColumn;
 
     @FXML
-    private TableColumn<HashData, String> md5HashColumn;
+    private TableColumn<BMSHashData, String> md5HashColumn;
 
     @FXML
-    private TableColumn<HashData, String> sha256HashColumn;
+    private TableColumn<BMSHashData, String> sha256HashColumn;
 
     @FXML
     private Label bottomMessageLabel;
@@ -91,9 +91,9 @@ public class MainWindowController {
 
     @FXML
     public void onContextMenuRequested(ContextMenuEvent event) {
-        final ObservableList<HashData> selectedItems = hashTableView.getSelectionModel().getSelectedItems();
+        final ObservableList<BMSHashData> selectedItems = hashTableView.getSelectionModel().getSelectedItems();
         if (selectedItems.size() != 1) return;
-        final HashData hashData = selectedItems.get(0);
+        final BMSHashData hashData = selectedItems.get(0);
         contextMenu.getItems().forEach(item -> {
             // なんとかして
             switch (Optional.ofNullable(item.getId()).orElse("")) {
@@ -178,7 +178,7 @@ public class MainWindowController {
         hashTableView.setContextMenu(contextMenu);
     }
 
-    public TableView<HashData> getHashTableView() {
+    public TableView<BMSHashData> getHashTableView() {
         return hashTableView;
     }
 

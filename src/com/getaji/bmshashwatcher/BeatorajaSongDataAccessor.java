@@ -57,7 +57,7 @@ public class BeatorajaSongDataAccessor implements SongDataAccessor {
         }
         statement.close();
         resultSet.close();
-        return new Result(HashData.HashType.MD5, hash, songData);
+        return new Result(BMSHashData.HashType.MD5, hash, songData);
     }
 
     @Override
@@ -80,7 +80,7 @@ public class BeatorajaSongDataAccessor implements SongDataAccessor {
         }
         statement.close();
         resultSet.close();
-        return new Result(HashData.HashType.SHA256, hash, songData);
+        return new Result(BMSHashData.HashType.SHA256, hash, songData);
     }
 
     @Override

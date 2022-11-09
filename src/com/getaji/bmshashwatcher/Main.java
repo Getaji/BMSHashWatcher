@@ -96,15 +96,15 @@ public class Main extends Application {
         controller.constructContextMenu(config);
         controller.setPrimaryStage(primaryStage);
 
-        final TableView<HashData> tableView = controller.getHashTableView();
-        final ObservableList<HashData> hashDataList = FXCollections.observableArrayList();
+        final TableView<BMSHashData> tableView = controller.getHashTableView();
+        final ObservableList<BMSHashData> hashDataList = FXCollections.observableArrayList();
         tableView.setItems(hashDataList);
 
         primaryStage.show();
 
         songDataPollingController.setConsumer(this::onCompleteSongDataPolling);
 
-        clipboardWatcher.addCallback(this::onUpdateClipboard);
+        clipboardWatcher.setCallback(this::onUpdateClipboard);
 
         if (appState.isFirstBoot()) {
             final Alert alertInfo = new Alert(Alert.AlertType.INFORMATION);
@@ -130,6 +130,11 @@ public class Main extends Application {
         controller.info("起動完了");
     }
 
+    /**
+     * 設定の保存を試みる。
+     * 失敗した場合は確認ダイアログを表示し、OKが選択された場合は再試行する。
+     * @return 保存に成功したか
+     */
     @SuppressWarnings("UnusedReturnValue")
     public boolean trySaveConfig() {
         while (true) {
@@ -152,6 +157,11 @@ public class Main extends Application {
         }
     }
 
+    /**
+     * 設定の読み込みを試みる。
+     * 失敗した場合は確認ダイアログを表示し、OKが選択された場合は再試行する。
+     * @return 読み込みに成功したか
+     */
     public Config tryLoadConfig() {
         while (true) {
             try {
@@ -241,30 +251,36 @@ public class Main extends Application {
         }
     }
 
+    /**
+     * beatorajaフォルダを選択するダイアログを表示する。
+     * @param owner ダイアログのオーナーウィンドウ
+     * @return 選択されたか
+     */
     public boolean chooseBeatorajaDir(Window owner) {
-        final boolean isChose = chooseDBDir(beatorajaSongDataAccessor, owner);
-        if (!songDataPollingController.getAccessors().contains(beatorajaSongDataAccessor)) {
-            songDataPollingController.addAccessor(0, beatorajaSongDataAccessor);
-        }
-        return isChose;
+        return chooseDBDir(beatorajaSongDataAccessor, owner);
     }
 
+    /**
+     * LR2フォルダを選択するダイアログを表示する。
+     * @param owner ダイアログのオーナーウィンドウ
+     * @return 選択されたか
+     */
     public boolean chooseLR2Dir(Window owner) {
-        final boolean isChose = chooseDBDir(lr2SongDataAccessor, owner);
-        if (!songDataPollingController.getAccessors().contains(lr2SongDataAccessor)) {
-            songDataPollingController.addAccessor(lr2SongDataAccessor);
-        }
-        return isChose;
+        return chooseDBDir(lr2SongDataAccessor, owner);
     }
 
+    /**
+     * 楽曲データの取得が完了した時に呼び出されるメソッド
+     * SongDataPollingControllerに登録される
+     */
     private void onCompleteSongDataPolling(SongDataPollingController.Result result) {
-        final ObservableList<HashData> hashDataList = controller.getHashTableView().getItems();
+        final ObservableList<BMSHashData> hashDataList = controller.getHashTableView().getItems();
         final SongData songData = result.data().songData();
         final List<Integer> restDataIndices = new ArrayList<>();
         boolean isFound = false;
 
         for (int i = 0; i < hashDataList.size(); i++) {
-            final HashData hashData = hashDataList.get(i);
+            final BMSHashData hashData = hashDataList.get(i);
 
             // すでに更新済みの場合は重複を削除する準備
             if (isFound) {
@@ -287,14 +303,14 @@ public class Main extends Application {
 
             // 更新済みでない
             if (
-                    (result.data().hashType() == HashData.HashType.MD5 && hashData.getMD5Hash().equals(result.data().hash()))
-                            || result.data().hashType() == HashData.HashType.SHA256 && hashData.getSHA256Hash().equals(result.data().hash())
+                    (result.data().hashType() == BMSHashData.HashType.MD5 && hashData.getMD5Hash().equals(result.data().hash()))
+                            || result.data().hashType() == BMSHashData.HashType.SHA256 && hashData.getSHA256Hash().equals(result.data().hash())
             ) {
                 if (songData == null) {
-                    hashDataList.set(i, new HashData("未登録のBMS", hashData.getMD5Hash(), hashData.getSHA256Hash()));
+                    hashDataList.set(i, new BMSHashData("未登録のBMS", hashData.getMD5Hash(), hashData.getSHA256Hash()));
                     break;
                 } else {
-                    hashDataList.set(i, new HashData(songData.getTitleFull(), songData.md5(), songData.sha256()));
+                    hashDataList.set(i, new BMSHashData(songData.getTitleFull(), songData.md5(), songData.sha256()));
                     isFound = true;
                 }
             }
@@ -304,6 +320,10 @@ public class Main extends Application {
         }
     }
 
+    /**
+     * クリップボードのデータが更新されたら呼び出されるメソッド
+     * ClipboardWatcherに登録される
+     */
     private void onUpdateClipboard(String value) {
         // このアプリがコピーしたデータなら無視
         if (appState.isCopyWithThisAppJustBefore()) {
@@ -316,10 +336,10 @@ public class Main extends Application {
 
         if (sha256.isEmpty() && md5.isEmpty()) return;
 
-        final ObservableList<HashData> hashDataList = controller.getHashTableView().getItems();
+        final ObservableList<BMSHashData> hashDataList = controller.getHashTableView().getItems();
 
         // 既存のリストを検索し、存在すれば一番上に移動
-        for (HashData hashData : hashDataList) {
+        for (BMSHashData hashData : hashDataList) {
             if ((sha256.isPresent() && hashData.getSHA256Hash().equals(sha256.get()))
                     || (md5.isPresent() && hashData.getMD5Hash().equals(md5.get()))
             ) {
@@ -331,18 +351,18 @@ public class Main extends Application {
         // 楽曲データを取得
 
         if (songDataPollingController.getPollers().size() == 0) {
-            hashDataList.add(0, new HashData("不明のBMS"));
+            hashDataList.add(0, new BMSHashData("不明のBMS"));
             return;
         }
 
-        final HashData hashData = new HashData("取得中...");
+        final BMSHashData hashData = new BMSHashData("取得中...");
 
         if (sha256.isPresent()) {
             hashData.setSHA56Hash(sha256.get());
-            songDataPollingController.poll(HashData.HashType.SHA256, sha256.get());
+            songDataPollingController.poll(BMSHashData.HashType.SHA256, sha256.get());
         } else {
             hashData.setMD5Hash(md5.get());
-            songDataPollingController.poll(HashData.HashType.MD5, md5.get());
+            songDataPollingController.poll(BMSHashData.HashType.MD5, md5.get());
         }
 
         hashDataList.add(0, hashData);
@@ -360,6 +380,10 @@ public class Main extends Application {
         return clipboardWatcher;
     }
 
+    /**
+     * クリップボードの監視状態を切り替え、メッセージを表示し、設定を保存する
+     * @param isEnable 監視するか
+     */
     public void setEnableClipboardWatcher(boolean isEnable) {
         if (isEnable) {
             getClipboardWatcher().start();
@@ -372,6 +396,10 @@ public class Main extends Application {
         trySaveConfig();
     }
 
+    /**
+     * 設定をアプリケーションに適用する
+     * @param model 設定ダイアログのモデルデータ
+     */
     public void applyPreference(PreferenceDialogModel model) {
         // beatoraja処理
         songDataPollingController.getPoller(beatorajaSongDataAccessor).ifPresent(poller -> {
@@ -402,6 +430,9 @@ public class Main extends Application {
         config.setLr2Path(model.getLr2Path());
     }
 
+    /**
+     * 設定画面を開く
+     */
     public void openPreference() {
         final Dialog<ButtonType> dialog = new Dialog<>();
         final FXMLLoader rootLoader = new FXMLLoader(Main.class.getResource("PreferenceDialog.fxml"));

@@ -57,7 +57,7 @@ public class LR2SongDataAccessor implements SongDataAccessor {
         }
         statement.close();
         resultSet.close();
-        return new Result(HashData.HashType.MD5, hash, songData);
+        return new Result(BMSHashData.HashType.MD5, hash, songData);
     }
 
     @Override
