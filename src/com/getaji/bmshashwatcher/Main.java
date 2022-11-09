@@ -39,24 +39,22 @@ public class Main extends Application {
 
     private MainWindowController controller;
 
-    public Main() throws IOException {
+    public static void main(String[] args) {
+        Application.launch();
+    }
+
+    public Main() {
         appState = new AppState();
 
         if (!Files.exists(Path.of("./config.json"))) {
             appState.setFirstBoot(true);
         }
 
-        try {
-            config = Config.load("./config.json");
-        } catch (IOException e) {
-            final Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("エラー");
-            alert.setHeaderText(
-                    "設定ファイル(config.json)を作成または読み込みできません。アクセス権限を確認してください"
-            );
-            alert.showAndWait();
+        config = tryLoadConfig();
+
+        if (config == null) {
             Platform.exit();
-            throw e;
+            throw new IllegalStateException();
         }
 
         clipboardWatcher = new ClipboardWatcher(1000);
@@ -70,10 +68,6 @@ public class Main extends Application {
         if (!config.getLr2Path().equals("")) {
             songDataPollingController.addAccessor(lr2SongDataAccessor);
         }
-    }
-
-    public static void main(String[] args) {
-        Application.launch();
     }
 
     public static Main getInstance() {
@@ -112,9 +106,6 @@ public class Main extends Application {
         clipboardWatcher.addCallback(this::onUpdateClipboard);
 
         if (appState.isFirstBoot()) {
-        }
-
-        if (appState.isFirstBoot()) {
             final Alert alertInfo = new Alert(Alert.AlertType.INFORMATION);
             alertInfo.setTitle("案内");
             alertInfo.setHeaderText("beatorajaまたはLR2のBMSデータを参照する場合、ファイルメニューからそれぞれのルートフォルダを選択してください");
@@ -126,19 +117,7 @@ public class Main extends Application {
             Optional<ButtonType> confirmResult = alert.showAndWait();
             config.setEnableWatchClipboard(confirmResult.isPresent());
 
-            try {
-                Config.save("./config.json", config);
-            } catch (IOException e) {
-                e.printStackTrace();
-                final Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-                errorAlert.setTitle("エラー");
-                errorAlert.setHeaderText(
-                        "設定ファイル(config.json)を保存できません。アクセス権限を確認してください"
-                );
-                errorAlert.showAndWait();
-                Platform.exit();
-                return;
-            }
+            trySaveConfig();
         }
 
         controller.setEnableWatchClipboard(config.isEnableWatchClipboard());
@@ -148,6 +127,48 @@ public class Main extends Application {
         }
 
         controller.info("起動完了");
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    public boolean trySaveConfig() {
+        while (true) {
+            try {
+                Config.save("./config.json", config);
+                return true;
+            } catch (IOException e) {
+                final Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("エラー");
+                alert.setHeaderText(
+                        "設定ファイル(config.json)を保存できません。再試行しますか？\n（キャンセルするとアプリケーションを終了します）"
+                );
+                final Optional<ButtonType> result = alert.showAndWait();
+                if (result.isEmpty() || result.get() != ButtonType.OK) {
+                    e.printStackTrace();
+                    Platform.exit();
+                    return false;
+                }
+            }
+        }
+    }
+
+    public Config tryLoadConfig() {
+        while (true) {
+            try {
+                return Config.load("./config.json");
+            } catch (IOException e) {
+                final Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle("エラー");
+                alert.setHeaderText(
+                        "設定ファイル(config.json)を作成または読み込みできません。再試行しますか？\n（キャンセルするとアプリケーションを終了します）"
+                );
+                final Optional<ButtonType> result = alert.showAndWait();
+                if (result.isEmpty() || result.get() != ButtonType.OK) {
+                    e.printStackTrace();
+                    Platform.exit();
+                    return null;
+                }
+            }
+        }
     }
 
     /**
@@ -216,18 +237,7 @@ public class Main extends Application {
                 }
             }
 
-            try {
-                Config.save("./config.json", config);
-            } catch (IOException e) {
-                e.printStackTrace();
-                final Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-                errorAlert.setTitle("エラー");
-                errorAlert.setHeaderText(
-                        "設定ファイル(config.json)を保存できません。アクセス権限を確認してください"
-                );
-                errorAlert.showAndWait();
-                Platform.exit();
-            }
+            trySaveConfig();
 
             break;
         }
@@ -359,17 +369,6 @@ public class Main extends Application {
             controller.info("クリップボードの監視を停止しました");
         }
         config.setEnableWatchClipboard(isEnable);
-        try {
-            Config.save("./config.json", config);
-        } catch (IOException e) {
-            e.printStackTrace();
-            final Alert errorAlert = new Alert(Alert.AlertType.ERROR);
-            errorAlert.setTitle("エラー");
-            errorAlert.setHeaderText(
-                    "設定ファイル(config.json)を保存できません。アクセス権限を確認してください"
-            );
-            errorAlert.showAndWait();
-            Platform.exit();
-        }
+        trySaveConfig();
     }
 }
