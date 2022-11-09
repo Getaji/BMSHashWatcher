@@ -1,5 +1,7 @@
 package com.getaji.bmshashwatcher.lib;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -17,6 +19,7 @@ public final class HashChecker {
 
     public static final Pattern PATTERN_MD5_PART = Pattern.compile("[a-f\\d]{32}", Pattern.CASE_INSENSITIVE);
     public static final Pattern PATTERN_SHA256_PART = Pattern.compile("[a-fA-F\\d]{64}");
+    public static final Pattern PATTERN_PART = Pattern.compile("[a-fA-F\\d]{64}|[a-fA-F\\d]{32}");
 
     /**
      * 与えられた文字列がMD5ハッシュの形式に一致するかを返す
@@ -54,5 +57,32 @@ public final class HashChecker {
     public static Optional<String> getSHA256HashPart(String s) {
         final Matcher matcher = PATTERN_SHA256_PART.matcher(s);
         return Optional.ofNullable(matcher.find() ? matcher.group(0) : null);
+    }
+
+    public static List<String> getMD5HashPartAll(String s) {
+        final Matcher matcher = PATTERN_MD5_PART.matcher(s);
+        final ArrayList<String> list = new ArrayList<>();
+        while (matcher.find()) {
+            list.add(matcher.group());
+        }
+        return list;
+    }
+
+    public static List<String> getSHA256HashPartAll(String s) {
+        final Matcher matcher = PATTERN_SHA256_PART.matcher(s);
+        final ArrayList<String> list = new ArrayList<>();
+        while (matcher.find()) {
+            list.add(matcher.group());
+        }
+        return list;
+    }
+
+    public static List<String> getHashPartAll(String s) {
+        final Matcher matcher = PATTERN_PART.matcher(s);
+        final ArrayList<String> list = new ArrayList<>();
+        while (matcher.find()) {
+            list.add(matcher.group());
+        }
+        return list;
     }
 }

@@ -21,8 +21,8 @@ public class SongDataPollingController {
     private SongDataPoller createPoller(SongDataAccessor accessor) {
         final SongDataPoller poller = new SongDataPoller(accessor);
         poller.setConsumer(result -> {
-            // found
-            if (result.songData() != null) {
+            // found or fallback disabled
+            if (result.songData() != null || !isEnableFallback) {
                 consumer.accept(new Result(accessor, result));
                 return;
             }
@@ -97,6 +97,10 @@ public class SongDataPollingController {
                 break;
             }
         }
+    }
+
+    public boolean isDisableAll() {
+        return pollers.stream().noneMatch(SongDataPoller::isEnable);
     }
 
     public record Result(SongDataAccessor accessor, SongDataAccessor.Result data) {
