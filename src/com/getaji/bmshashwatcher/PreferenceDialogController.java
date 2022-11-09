@@ -1,7 +1,9 @@
 package com.getaji.bmshashwatcher;
 
+import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Window;
 
@@ -26,7 +28,33 @@ public class PreferenceDialogController {
     @FXML
     private Label labelErrorLR2Path;
 
+    @FXML
+    private TableView<WebService> tableWebService;
+
+    @FXML
+    private TableColumn<WebService, String> columnWebServiceName;
+
+    @FXML
+    private TableColumn<WebService, String> columnWebServiceMD5Pattern;
+
+    @FXML
+    private TableColumn<WebService, String> columnWebServiceSHA256Pattern;
+
     private Dialog<ButtonType> dialog;
+
+    private Dialog<ButtonType> cacheDialogWebServiceEdit = null;
+
+    @FXML
+    public void initialize() {
+        tableWebService.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        columnWebServiceName.setCellValueFactory(new PropertyValueFactory<>("title"));
+        columnWebServiceMD5Pattern.setCellValueFactory(
+                data -> new SimpleStringProperty(data.getValue().getMD5UrlPattern())
+        );
+        columnWebServiceSHA256Pattern.setCellValueFactory(
+                data -> new SimpleStringProperty(data.getValue().getSHA256UrlPattern())
+        );
+    }
 
     @FXML
     public void onActionChooseBeatorajaPath() {
@@ -53,6 +81,15 @@ public class PreferenceDialogController {
         final File selectedDirectory = directoryChooser.showDialog(dialogWindow);
         fieldLR2Path.setText(selectedDirectory.getPath());
     }
+
+    @FXML
+    public void onActionAddWebService() {}
+
+    @FXML
+    public void onActionEditWebService() {}
+
+    @FXML
+    public void onActionRemoveWebService() {}
 
     private void switchErrorLabel(Label label, String text) {
         label.setText(text);
@@ -81,6 +118,8 @@ public class PreferenceDialogController {
                     isValid ? "" : "データベースが見つかりません。"
             );
         });
+
+        tableWebService.itemsProperty().bindBidirectional(model.webServicesProperty());
     }
 
     public void unbind(PreferenceDialogModel model) {
@@ -88,6 +127,7 @@ public class PreferenceDialogController {
         fieldBeatorajaPath.textProperty().unbindBidirectional(model.beatorajaPathProperty());
         checkboxUseLR2DB.selectedProperty().unbindBidirectional(model.useLR2DBProperty());
         fieldLR2Path.textProperty().unbindBidirectional(model.lr2PathProperty());
+        tableWebService.itemsProperty().unbindBidirectional(model.webServicesProperty());
     }
 
     public void setDialog(Dialog<ButtonType> dialog) {

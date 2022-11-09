@@ -458,6 +458,7 @@ public class Main extends Application {
         model.useLR2DBProperty().set(config.isUseLR2DB());
         model.beatorajaPathProperty().set(config.getBeatorajaPath());
         model.lr2PathProperty().set(config.getLr2Path());
+        model.getWebServices().addAll(config.getWebServiceList());
 
         dialog.setOnCloseRequest(event -> {
             // APPLYボタンならイベントを使用することで閉じないようにする
