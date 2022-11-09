@@ -1,6 +1,7 @@
 package com.getaji.bmshashwatcher.controller;
 
 import com.getaji.bmshashwatcher.Main;
+import com.getaji.bmshashwatcher.model.Config;
 import com.getaji.bmshashwatcher.model.PreferenceDialogModel;
 import com.getaji.bmshashwatcher.model.WebService;
 import com.getaji.bmshashwatcher.model.WebServiceEditorModel;
@@ -146,6 +147,20 @@ public class PreferenceDialogController {
         result.ifPresent(buttonType -> {
             if (buttonType == ButtonType.OK) {
                 tableWebService.getItems().remove(webService);
+            }
+        });
+    }
+
+    @FXML
+    public void onActionRestoreDefaultWebService() {
+        final Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("確認");
+        alert.setHeaderText("登録されているWebサービスをデフォルトに戻しますか？\n（設定を保存するまで反映されません）");
+        Optional<ButtonType> result = alert.showAndWait();
+        result.ifPresent(buttonType -> {
+            if (buttonType == ButtonType.OK) {
+                tableWebService.getItems().clear();
+                tableWebService.getItems().setAll(Config.DEFAULT_WEB_SERVICE_LIST);
             }
         });
     }

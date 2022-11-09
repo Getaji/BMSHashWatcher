@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -17,6 +18,13 @@ import java.util.List;
  * Jacksonで変換可能
  */
 public class Config {
+    public static final List<WebService> DEFAULT_WEB_SERVICE_LIST = Arrays.asList(
+            new WebService("Mocha-Repository", "", "https://mocha-repository.info/song.php?sha256=%s"),
+            new WebService("MinIR", "", "https://www.gaftalk.com/minir/#/viewer/song/%s/0"),
+            new WebService("Cinnamon", "", "https://cinnamon.link/charts/%s"),
+            new WebService("LR2IR", "http://www.dream-pro.info/~lavalse/LR2IR/search.cgi?mode=ranking&bmsmd5=%s", "")
+    );
+
     private List<WebService> webServiceList = new ArrayList<>();
 
     private String beatorajaPath = "";
@@ -99,13 +107,7 @@ public class Config {
             });
         } else {
             final Config config = new Config();
-            Collections.addAll(
-                    config.getWebServiceList(),
-                    new WebService("Mocha-Repository", "", "https://mocha-repository.info/song.php?sha256=%s"),
-                    new WebService("MinIR", "", "https://www.gaftalk.com/minir/#/viewer/song/%s/0"),
-                    new WebService("Cinnamon", "", "https://cinnamon.link/charts/%s"),
-                    new WebService("LR2IR", "http://www.dream-pro.info/~lavalse/LR2IR/search.cgi?mode=ranking&bmsmd5=%s", "")
-            );
+            config.getWebServiceList().addAll(DEFAULT_WEB_SERVICE_LIST);
             final ObjectMapper objectMapper = new ObjectMapper();
             final String text = objectMapper.writeValueAsString(config);
             Files.writeString(file.toPath(), text);

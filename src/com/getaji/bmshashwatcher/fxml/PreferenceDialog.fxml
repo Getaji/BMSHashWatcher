@@ -88,6 +88,11 @@
                                           <Font size="13.0" />
                                        </font>
                                     </Button>
+                                    <Button mnemonicParsing="false" onAction="#onActionRestoreDefaultWebService" text="デフォルトに戻す">
+                                       <font>
+                                          <Font size="13.0" />
+                                       </font>
+                                    </Button>
                                  </children>
                                  <BorderPane.margin>
                                     <Insets top="10.0" />
