@@ -436,6 +436,12 @@ public class Main extends Application {
         config.setUseLR2DB(model.isUseLR2DB());
         config.setBeatorajaPath(model.getBeatorajaPath());
         config.setLr2Path(model.getLr2Path());
+
+        config.setWebServiceList(model.getWebServices());
+
+        controller.constructContextMenu(config);
+
+        trySaveConfig();
     }
 
     /**

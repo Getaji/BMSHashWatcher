@@ -97,7 +97,7 @@
                            <center>
                               <BorderPane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
                                  <center>
-                                    <TableView fx:id="tableWebService" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+                                    <TableView fx:id="tableWebService" onMouseClicked="#onClickWebService" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
                                       <columns>
                                         <TableColumn fx:id="columnWebServiceName" prefWidth="105.0" text="名前" />
                                         <TableColumn fx:id="columnWebServiceMD5Pattern" minWidth="0.0" prefWidth="220.0" text="MD5 URL" />
@@ -108,7 +108,7 @@
                                  <right>
                                     <VBox alignment="CENTER" spacing="2.0" BorderPane.alignment="CENTER">
                                        <children>
-                                          <Button mnemonicParsing="false" text="▲" textAlignment="CENTER">
+                                          <Button mnemonicParsing="false" onAction="#onActionMoveUpWebService" text="▲" textAlignment="CENTER">
                                              <font>
                                                 <Font size="10.0" />
                                              </font>
@@ -116,7 +116,7 @@
                                                 <Insets bottom="10.0" left="6.0" right="6.0" top="10.0" />
                                              </padding>
                                           </Button>
-                                          <Button mnemonicParsing="false" text="▼" textAlignment="CENTER">
+                                          <Button mnemonicParsing="false" onAction="#onActionMoveDownWebService" text="▼" textAlignment="CENTER">
                                              <font>
                                                 <Font size="10.0" />
                                              </font>

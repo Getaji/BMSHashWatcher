@@ -1,10 +1,8 @@
 package com.getaji.bmshashwatcher.controller;
 
 import com.getaji.bmshashwatcher.*;
-import com.getaji.bmshashwatcher.model.AppState;
-import com.getaji.bmshashwatcher.model.BMSHashData;
-import com.getaji.bmshashwatcher.model.Config;
-import com.getaji.bmshashwatcher.model.MainWindowModel;
+import com.getaji.bmshashwatcher.model.*;
+import com.getaji.bmshashwatcher.view.TypedMenuItem;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
@@ -100,13 +98,28 @@ public class MainWindowController {
         if (selectedItems.size() != 1) return;
         final BMSHashData hashData = selectedItems.get(0);
         contextMenu.getItems().forEach(item -> {
-            // なんとかして
-            switch (Optional.ofNullable(item.getId()).orElse("")) {
-                case "contextMenu-itemCopyMD5Hash", "contextMenu-itemBrowseLR2IR" ->
-                        item.setDisable(hashData.getMD5Hash().equals(""));
-                case "contextMenu-itemCopySHA256Hash", "contextMenu-itemBrowseMocha-Repository", "contextMenu-itemBrowseMinIR", "contextMenu-itemBrowseCinnamon" ->
-                        item.setDisable(hashData.getSHA256Hash().equals(""));
-                default -> item.setDisable(false);
+            WebService webService = null;
+            if (item instanceof TypedMenuItem<?>) {
+                final Object value = ((TypedMenuItem<?>) item).getValue();
+                if (value instanceof WebService) {
+                    webService = (WebService) value;
+                }
+            }
+            if (webService != null) {
+                switch (webService.getSupportedHashType()) {
+                    case MD5 -> item.setDisable(hashData.getMD5Hash().isEmpty());
+                    case SHA256 -> item.setDisable(hashData.getSHA256Hash().isEmpty());
+                    case MD5_AND_SHA256 -> item.setDisable(hashData.getMD5Hash().isEmpty() && hashData.getSHA256Hash().isEmpty());
+                    case NONE -> item.setDisable(true);
+                }
+            } else {
+                switch (Optional.ofNullable(item.getId()).orElse("")) {
+                    case "contextMenu-itemCopyMD5Hash" ->
+                            item.setDisable(hashData.getMD5Hash().equals(""));
+                    case "contextMenu-itemCopySHA256Hash" ->
+                            item.setDisable(hashData.getSHA256Hash().equals(""));
+                    default -> item.setDisable(false);
+                }
             }
         });
     }
@@ -116,11 +129,11 @@ public class MainWindowController {
 
     public void constructContextMenu(Config config) {
         contextMenu = new ContextMenu();
-        ObservableList<MenuItem> menuItems = contextMenu.getItems();
+        final ObservableList<MenuItem> menuItems = contextMenu.getItems();
 
         config.getWebServiceList().forEach(webService -> {
-            final MenuItem item = new MenuItem(webService.getTitle() + "で開く");
-            item.setId("contextMenu-itemBrowse" + webService.getTitle());
+            final TypedMenuItem<WebService> item = new TypedMenuItem<>(webService.getTitle() + "で開く");
+            item.setValue(webService);
             item.setOnAction(ev -> hashTableView.getSelectionModel().getSelectedItems()
                     .forEach(webService::browse));
             menuItems.add(item);
