@@ -16,7 +16,6 @@ import java.util.function.Consumer;
  * 値を保持し、新たな値が文字列かつ異なる値なら状態を更新して通知する
  */
 public class ClipboardWatcher {
-    private final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
     private TimerTask timerTask;
     private Timer timer;
     private String value = "";
@@ -82,7 +81,7 @@ public class ClipboardWatcher {
     private void updateClipboard() throws IllegalStateException {
         final String data;
         try {
-            data = clipboard.getData(DataFlavor.stringFlavor).toString();
+            data = Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor).toString();
         } catch (UnsupportedFlavorException | IOException e) {
             // 画像データなど文字列に変換できないタイプのデータは無視
             return;
