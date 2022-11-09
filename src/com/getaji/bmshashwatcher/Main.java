@@ -101,10 +101,6 @@ public class Main extends Application {
         controller.constructContextMenu(config);
         controller.setPrimaryStage(primaryStage);
 
-        final TableView<BMSHashData> tableView = controller.getHashTableView();
-        final ObservableList<BMSHashData> hashDataList = FXCollections.observableArrayList();
-        tableView.setItems(hashDataList);
-
         primaryStage.show();
 
         songDataPollingController.setConsumer(this::onCompleteSongDataPolling);
