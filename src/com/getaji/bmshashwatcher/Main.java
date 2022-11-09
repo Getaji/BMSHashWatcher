@@ -1,5 +1,13 @@
 package com.getaji.bmshashwatcher;
 
+import com.getaji.bmshashwatcher.controller.MainWindowController;
+import com.getaji.bmshashwatcher.controller.PreferenceDialogController;
+import com.getaji.bmshashwatcher.db.BeatorajaSongDataAccessor;
+import com.getaji.bmshashwatcher.db.LR2SongDataAccessor;
+import com.getaji.bmshashwatcher.db.SongDataAccessor;
+import com.getaji.bmshashwatcher.db.SongDataPollingController;
+import com.getaji.bmshashwatcher.lib.HashChecker;
+import com.getaji.bmshashwatcher.model.*;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -81,7 +89,7 @@ public class Main extends Application {
 
         primaryStage.setTitle("BMS Hash Watcher v" + APP_VERSION);
 
-        final FXMLLoader rootLoader = new FXMLLoader(getClass().getResource("MainWindow.fxml"));
+        final FXMLLoader rootLoader = new FXMLLoader(getClass().getResource("fxml/MainWindow.fxml"));
         final Parent root;
         try {
             root = rootLoader.load();
@@ -435,7 +443,7 @@ public class Main extends Application {
      */
     public void openPreference() {
         final Dialog<ButtonType> dialog = new Dialog<>();
-        final FXMLLoader rootLoader = new FXMLLoader(Main.class.getResource("PreferenceDialog.fxml"));
+        final FXMLLoader rootLoader = new FXMLLoader(Main.class.getResource("fxml/PreferenceDialog.fxml"));
         final Parent root;
         try {
             root = rootLoader.load();

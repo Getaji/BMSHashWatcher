@@ -1,4 +1,4 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;

@@ -1,5 +1,10 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.controller;
 
+import com.getaji.bmshashwatcher.*;
+import com.getaji.bmshashwatcher.model.AppState;
+import com.getaji.bmshashwatcher.model.BMSHashData;
+import com.getaji.bmshashwatcher.model.Config;
+import com.getaji.bmshashwatcher.model.MainWindowModel;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;

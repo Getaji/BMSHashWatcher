@@ -1,8 +1,10 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.getaji.bmshashwatcher.Main;
+import com.getaji.bmshashwatcher.lib.Either;
 
 import java.awt.*;
 import java.io.IOException;

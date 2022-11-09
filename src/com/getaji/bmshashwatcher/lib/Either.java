@@ -1,4 +1,4 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.lib;
 
 import java.util.function.Consumer;
 

@@ -1,5 +1,7 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.db;
 
+import com.getaji.bmshashwatcher.model.BMSHashData;
+import com.getaji.bmshashwatcher.Main;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 

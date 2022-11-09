@@ -1,4 +1,4 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.model;
 
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;

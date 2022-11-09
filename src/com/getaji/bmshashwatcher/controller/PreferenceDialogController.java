@@ -1,5 +1,8 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.controller;
 
+import com.getaji.bmshashwatcher.Main;
+import com.getaji.bmshashwatcher.model.PreferenceDialogModel;
+import com.getaji.bmshashwatcher.model.WebService;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;

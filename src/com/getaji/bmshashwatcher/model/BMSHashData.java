@@ -1,4 +1,4 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.model;
 
 /**
  * BMSハッシュのデータを管理するクラス（変更可能）

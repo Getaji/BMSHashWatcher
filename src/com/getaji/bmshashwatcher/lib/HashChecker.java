@@ -1,4 +1,4 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.lib;
 
 import java.util.Optional;
 import java.util.regex.Matcher;
