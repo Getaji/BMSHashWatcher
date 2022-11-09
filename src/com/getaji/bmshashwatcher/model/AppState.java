@@ -1,4 +1,4 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.model;
 
 /**
  * アプリケーションの状態を管理するクラス

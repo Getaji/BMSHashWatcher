@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="241.0" prefWidth="420.0" spacing="6.0" xmlns="http://javafx.com/javafx/18" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.getaji.bmshashwatcher.controller.WebServiceEditorController">
+   <children>
+      <Label text="サービスの名前">
+         <font>
+            <Font size="13.0" />
+         </font>
+      </Label>
+      <TextField fx:id="fieldName">
+         <VBox.margin>
+            <Insets bottom="8.0" />
+         </VBox.margin></TextField>
+      <Label text="MD5ハッシュで開くURL">
+         <font>
+            <Font size="13.0" />
+         </font>
+      </Label>
+      <Label text="\%h はハッシュに、%t は取得したタイトルに置換されます" />
+      <TextField fx:id="fieldMD5HashPattern">
+         <VBox.margin>
+            <Insets bottom="8.0" />
+         </VBox.margin></TextField>
+      <Label text="SHA-256ハッシュで開くURL">
+         <font>
+            <Font size="13.0" />
+         </font>
+      </Label>
+      <Label text="\%h はハッシュに、%t は取得したタイトルに置換されます" />
+      <TextField fx:id="fieldSHA256HashPattern" />
+   </children>
+</VBox>

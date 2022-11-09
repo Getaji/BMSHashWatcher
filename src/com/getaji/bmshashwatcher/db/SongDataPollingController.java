@@ -1,4 +1,6 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.db;
+
+import com.getaji.bmshashwatcher.model.BMSHashData;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,6 +99,6 @@ public class SongDataPollingController {
         }
     }
 
-    record Result(SongDataAccessor accessor, SongDataAccessor.Result data) {
+    public record Result(SongDataAccessor accessor, SongDataAccessor.Result data) {
     }
 }

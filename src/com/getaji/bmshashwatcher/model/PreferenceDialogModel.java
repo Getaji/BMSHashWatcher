@@ -1,15 +1,15 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.model;
 
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 public class PreferenceDialogModel {
     private final BooleanProperty useBeatorajaDB = new SimpleBooleanProperty();
     private final BooleanProperty useLR2DB = new SimpleBooleanProperty();
     private final StringProperty beatorajaPath = new SimpleStringProperty();
     private final StringProperty lr2Path = new SimpleStringProperty();
+    private final ListProperty<WebService> webServices = new SimpleListProperty<>(FXCollections.observableArrayList());
 
     public boolean isUseBeatorajaDB() {
         return useBeatorajaDB.get();
@@ -41,5 +41,13 @@ public class PreferenceDialogModel {
 
     public StringProperty lr2PathProperty() {
         return lr2Path;
+    }
+
+    public ObservableList<WebService> getWebServices() {
+        return webServices.get();
+    }
+
+    public ListProperty<WebService> webServicesProperty() {
+        return webServices;
     }
 }

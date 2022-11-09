@@ -1,4 +1,9 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.db;
+
+import com.getaji.bmshashwatcher.model.BMSHashData;
+import com.getaji.bmshashwatcher.model.Config;
+import com.getaji.bmshashwatcher.model.SongData;
+import com.getaji.bmshashwatcher.model.SupportedHashType;
 
 import java.sql.SQLException;
 
