@@ -443,6 +443,7 @@ public class Main extends Application {
             throw new RuntimeException(e);
         }
         dialog.setTitle("設定");
+        dialog.setResizable(true);
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.APPLY, ButtonType.CANCEL);
         dialog.getDialogPane().setContent(root);
 
