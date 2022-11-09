@@ -2,6 +2,7 @@ package com.getaji.bmshashwatcher;
 
 import org.sqlite.SQLiteConfig;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
@@ -85,5 +86,17 @@ public class BeatorajaSongDataAccessor implements SongDataAccessor {
     @Override
     public SupportedHashType getSupportedHashType() {
         return SupportedHashType.MD5_AND_SHA256;
+    }
+
+    @Override
+    public boolean isValidPath(String baseDir) {
+        if (baseDir.equals("")) return false;
+
+        return Files.exists(Path.of(baseDir, "songdata.db"));
+    }
+
+    @Override
+    public boolean isValidPath(Config config) {
+        return isValidPath(config.getBeatorajaPath());
     }
 }

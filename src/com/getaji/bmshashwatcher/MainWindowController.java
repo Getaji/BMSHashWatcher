@@ -70,6 +70,11 @@ public class MainWindowController {
     }
 
     @FXML
+    public void onActionOpenPreference() {
+        Main.getInstance().openPreference();
+    }
+
+    @FXML
     public void onActionToggleWatchClipboard() {
         Main.getInstance().setEnableClipboardWatcher(menuItemToggleWatchClipboard.isSelected());
     }

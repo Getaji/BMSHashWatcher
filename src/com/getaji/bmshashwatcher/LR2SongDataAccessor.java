@@ -2,6 +2,7 @@ package com.getaji.bmshashwatcher;
 
 import org.sqlite.SQLiteConfig;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
@@ -60,12 +61,24 @@ public class LR2SongDataAccessor implements SongDataAccessor {
     }
 
     @Override
-    public Result findBMSBySHA256(String hash) throws SQLException {
+    public Result findBMSBySHA256(String hash) {
         throw new UnsupportedOperationException("LR2はSHA-256ハッシュで検索できません");
     }
 
     @Override
     public SupportedHashType getSupportedHashType() {
         return SupportedHashType.MD5;
+    }
+
+    @Override
+    public boolean isValidPath(String baseDir) {
+        if (baseDir.equals("")) return false;
+
+        return Files.exists(Path.of(baseDir, "LR2files/Database/song.db"));
+    }
+
+    @Override
+    public boolean isValidPath(Config config) {
+        return isValidPath(config.getLr2Path());
     }
 }

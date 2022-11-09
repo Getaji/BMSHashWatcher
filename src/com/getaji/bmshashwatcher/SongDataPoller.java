@@ -15,6 +15,8 @@ public class SongDataPoller {
     private final SongDataAccessor accessor;
     private final ExecutorService executorService;
     private Consumer<SongDataAccessor.Result> consumer;
+    private boolean isReconnectRequired = false;
+    private boolean isEnable = true;
 
     public SongDataPoller(SongDataAccessor accessor) {
         this(accessor, null);
@@ -40,7 +42,15 @@ public class SongDataPoller {
         }
         executorService.submit(() -> {
             try {
-                accessor.open(Main.getInstance().getConfig());
+                if (isReconnectRequired) {
+                    if (accessor.isOpen()) {
+                        accessor.close();
+                    }
+                    isReconnectRequired = false;
+                }
+                if (!accessor.isOpen()) {
+                    accessor.open(Main.getInstance().getConfig());
+                }
                 SongDataAccessor.Result songData;
                 switch (type) {
                     case MD5 -> songData = accessor.findBMSByMD5(hash);
@@ -70,5 +80,21 @@ public class SongDataPoller {
 
     public SongDataAccessor getSongDataAccessor() {
         return accessor;
+    }
+
+    public boolean isReconnectRequired() {
+        return isReconnectRequired;
+    }
+
+    public void setReconnectRequired(boolean reconnectRequired) {
+        isReconnectRequired = reconnectRequired;
+    }
+
+    public boolean isEnable() {
+        return isEnable;
+    }
+
+    public void setEnable(boolean enable) {
+        isEnable = enable;
     }
 }

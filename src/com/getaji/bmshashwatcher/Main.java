@@ -9,6 +9,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.TableView;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -18,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -58,16 +58,17 @@ public class Main extends Application {
         }
 
         clipboardWatcher = new ClipboardWatcher(1000);
+
         beatorajaSongDataAccessor = new BeatorajaSongDataAccessor();
         lr2SongDataAccessor = new LR2SongDataAccessor();
-        songDataPollingController = new SongDataPollingController();
 
-        if (!config.getBeatorajaPath().equals("")) {
-            songDataPollingController.addAccessor(beatorajaSongDataAccessor);
-        }
-        if (!config.getLr2Path().equals("")) {
-            songDataPollingController.addAccessor(lr2SongDataAccessor);
-        }
+        songDataPollingController = new SongDataPollingController();
+        songDataPollingController
+                .addAccessor(beatorajaSongDataAccessor)
+                .setEnable(!config.getBeatorajaPath().equals(""));
+        songDataPollingController
+                .addAccessor(lr2SongDataAccessor)
+                .setEnable(!config.getLr2Path().equals(""));
     }
 
     public static Main getInstance() {
@@ -183,19 +184,19 @@ public class Main extends Application {
     public boolean chooseDBDir(SongDataAccessor accessor, Window owner) {
         final String name;
         final String currentPath;
-        final String dbPathRelative;
         final Consumer<String> setPath;
+        final boolean isEnable;
 
         if (accessor == beatorajaSongDataAccessor) {
             name = "beatoraja";
             currentPath = config.getBeatorajaPath();
-            dbPathRelative = "songdata.db";
             setPath = config::setBeatorajaPath;
+            isEnable = config.isUseBeatorajaDB();
         } else if (accessor == lr2SongDataAccessor) {
             name = "LR2";
             currentPath = config.getLr2Path();
-            dbPathRelative = "LR2files/Database/song.db";
             setPath = config::setLr2Path;
+            isEnable = config.isUseLR2DB();
         } else {
             throw new IllegalArgumentException();
         }
@@ -215,8 +216,7 @@ public class Main extends Application {
             }
 
             // ディレクトリの確認
-            final Path dbPath = selectedDirectory.toPath().resolve(dbPathRelative);
-            if (!Files.exists(dbPath)) {
+            if (accessor.isValidPath(selectedDirectory.getPath())) {
                 final Alert errorAlert = new Alert(Alert.AlertType.ERROR);
                 errorAlert.setTitle("エラー");
                 errorAlert.setHeaderText(
@@ -226,17 +226,14 @@ public class Main extends Application {
                 continue;
             }
 
-            // accessorが開かれていてDBのパスが変更された場合は閉じる
-            final boolean isRestartDBConnectionRequired = accessor.isOpen()
-                    && !currentPath.equals(selectedDirectory.getAbsolutePath());
+            final boolean isPathChanged = !currentPath.equals(selectedDirectory.getAbsolutePath());
             setPath.accept(selectedDirectory.getAbsolutePath());
-            if (isRestartDBConnectionRequired && accessor.isOpen()) {
-                try {
-                    accessor.close();
-                } catch (SQLException e) {
-                    throw new RuntimeException(e);
+            songDataPollingController.getPoller(accessor).ifPresent(poller -> {
+                if (accessor.isOpen() && isPathChanged) {
+                    poller.setReconnectRequired(true);
                 }
-            }
+                poller.setEnable(isEnable);
+            });
 
             trySaveConfig();
 
@@ -373,5 +370,85 @@ public class Main extends Application {
         }
         config.setEnableWatchClipboard(isEnable);
         trySaveConfig();
+    }
+
+    public void applyPreference(PreferenceDialogModel model) {
+        // beatoraja処理
+        songDataPollingController.getPoller(beatorajaSongDataAccessor).ifPresent(poller -> {
+            poller.setEnable(model.isUseBeatorajaDB() && !model.getBeatorajaPath().equals(""));
+            // パスが変更
+            if (!config.getBeatorajaPath().equals(model.getBeatorajaPath())) {
+                poller.setEnable(model.isUseBeatorajaDB() && !model.getBeatorajaPath().equals(""));
+                if (beatorajaSongDataAccessor.isOpen()) {
+                    poller.setReconnectRequired(true);
+                }
+            }
+        });
+        // LR2処理
+        songDataPollingController.getPoller(lr2SongDataAccessor).ifPresent(poller -> {
+            poller.setEnable(model.isUseLR2DB() && !model.getLr2Path().equals(""));
+            // パスが変更
+            if (!config.getLr2Path().equals(model.getLr2Path())) {
+                poller.setEnable(model.isUseLR2DB() && !model.getLr2Path().equals(""));
+                if (lr2SongDataAccessor.isOpen()) {
+                    poller.setReconnectRequired(true);
+                }
+            }
+        });
+
+        config.setUseBeatorajaDB(model.isUseBeatorajaDB());
+        config.setUseLR2DB(model.isUseLR2DB());
+        config.setBeatorajaPath(model.getBeatorajaPath());
+        config.setLr2Path(model.getLr2Path());
+    }
+
+    public void openPreference() {
+        final Dialog<ButtonType> dialog = new Dialog<>();
+        final FXMLLoader rootLoader = new FXMLLoader(Main.class.getResource("PreferenceDialog.fxml"));
+        final Parent root;
+        try {
+            root = rootLoader.load();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        dialog.setTitle("設定");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.APPLY, ButtonType.CANCEL);
+        dialog.getDialogPane().setContent(root);
+
+        // controller <-> model
+        final PreferenceDialogModel model = new PreferenceDialogModel();
+        final PreferenceDialogController dialogController = rootLoader.getController();
+        dialogController.bind(model);
+        dialogController.setDialog(dialog);
+
+        // config -> model
+        model.useBeatorajaDBProperty().set(config.isUseBeatorajaDB());
+        model.useLR2DBProperty().set(config.isUseLR2DB());
+        model.beatorajaPathProperty().set(config.getBeatorajaPath());
+        model.lr2PathProperty().set(config.getLr2Path());
+
+        dialog.setOnCloseRequest(event -> {
+            // APPLYボタンならイベントを使用することで閉じないようにする
+            if (dialog.getResult() == ButtonType.APPLY) {
+                event.consume();
+                applyPreference(model);
+            }
+        });
+
+        final Optional<ButtonType> result = dialog.showAndWait();
+        result.ifPresent(buttonType -> {
+            if (buttonType == ButtonType.OK) {
+                applyPreference(model);
+            }
+        });
+        dialogController.unbind(model);
+    }
+
+    public SongDataAccessor getBeatorajaSongDataAccessor() {
+        return beatorajaSongDataAccessor;
+    }
+
+    public SongDataAccessor getLr2SongDataAccessor() {
+        return lr2SongDataAccessor;
     }
 }

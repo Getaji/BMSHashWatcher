@@ -15,6 +15,10 @@ public interface SongDataAccessor {
 
     SupportedHashType getSupportedHashType();
 
+    boolean isValidPath(String baseDir);
+
+    boolean isValidPath(Config config);
+
     default boolean isSupportHashType(HashData.HashType hashType) {
         switch (getSupportedHashType()) {
             case MD5 -> {

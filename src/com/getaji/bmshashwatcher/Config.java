@@ -19,6 +19,10 @@ public class Config {
 
     private String lr2Path = "";
 
+    private boolean useBeatorajaDB = true;
+
+    private boolean useLR2DB = true;
+
     private boolean enableWatchClipboard = false;
 
     @JsonProperty("webServiceList")
@@ -46,6 +50,22 @@ public class Config {
 
     public void setLr2Path(String lr2Path) {
         this.lr2Path = lr2Path;
+    }
+
+    public boolean isUseBeatorajaDB() {
+        return useBeatorajaDB;
+    }
+
+    public void setUseBeatorajaDB(boolean useBeatorajaDB) {
+        this.useBeatorajaDB = useBeatorajaDB;
+    }
+
+    public boolean isUseLR2DB() {
+        return useLR2DB;
+    }
+
+    public void setUseLR2DB(boolean useLR2DB) {
+        this.useLR2DB = useLR2DB;
     }
 
     @JsonProperty("enableWatchClipboard")
