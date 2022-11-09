@@ -202,8 +202,12 @@ public class PreferenceDialogController {
         model.md5UrlPatternProperty().set(webService.getMD5UrlPattern());
         model.sha256UrlPatternProperty().set(webService.getSHA256UrlPattern());
 
+        model.nameProperty().addListener((observable, oldValue, newValue) -> {
+            dialog.getDialogPane().lookupButton(ButtonType.OK).setDisable(newValue.isBlank());
+        });
+        dialog.getDialogPane().lookupButton(ButtonType.OK).setDisable(webService.getTitle().isBlank());
+
         final Optional<ButtonType> result = dialog.showAndWait();
-        // TODO validation
         result.ifPresent(buttonType -> {
             if (buttonType == ButtonType.OK) {
                 final WebService newWebService = new WebService(
