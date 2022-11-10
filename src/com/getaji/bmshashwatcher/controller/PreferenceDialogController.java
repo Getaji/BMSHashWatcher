@@ -1,5 +1,6 @@
 package com.getaji.bmshashwatcher.controller;
 
+import com.getaji.bmshashwatcher.ClipboardWatcher;
 import com.getaji.bmshashwatcher.Main;
 import com.getaji.bmshashwatcher.model.Config;
 import com.getaji.bmshashwatcher.model.PreferenceDialogModel;
@@ -39,6 +40,12 @@ public class PreferenceDialogController {
     private Label labelErrorLR2Path;
 
     @FXML
+    private Spinner<Integer> spinnerClipboardDelay;
+
+    @FXML
+    private Label labelErrorClipboardDelay;
+
+    @FXML
     private TableView<WebService> tableWebService;
 
     @FXML
@@ -56,6 +63,10 @@ public class PreferenceDialogController {
 
     @FXML
     public void initialize() {
+        // 楽曲DBタブ
+        spinnerClipboardDelay.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(100, Integer.MAX_VALUE));
+
+        // Webサービスタブ
         tableWebService.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         columnWebServiceName.setCellValueFactory(new PropertyValueFactory<>("title"));
         columnWebServiceMD5Pattern.setCellValueFactory(
@@ -227,6 +238,7 @@ public class PreferenceDialogController {
         label.setText(text);
         label.setVisible(!text.isEmpty());
         label.setManaged(!text.isEmpty());
+        setEnableDialogOK(text.isEmpty());
     }
 
     public void bind(PreferenceDialogModel model) {
@@ -253,6 +265,18 @@ public class PreferenceDialogController {
             );
         });
 
+        model.clipboardDelayProperty().asObject().bindBidirectional(spinnerClipboardDelay.getValueFactory().valueProperty());
+
+        spinnerClipboardDelay.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null) {
+                switchErrorLabel(labelErrorClipboardDelay, "正しい値を指定してください");
+            } else if (newValue < ClipboardWatcher.DELAY_LOWER_LIMIT) {
+                switchErrorLabel(labelErrorClipboardDelay, "100ミリ秒（0.1秒）以上に設定してください");
+            } else {
+                switchErrorLabel(labelErrorClipboardDelay, "");
+            }
+        });
+
         tableWebService.itemsProperty().bindBidirectional(model.webServicesProperty());
     }
 
@@ -266,5 +290,13 @@ public class PreferenceDialogController {
 
     public void setDialog(Dialog<ButtonType> dialog) {
         this.dialog = dialog;
+    }
+
+    public void setEnableDialogOK(boolean isEnable) {
+        dialog.getDialogPane().lookupButton(ButtonType.OK).setDisable(!isEnable);
+    }
+
+    public void onPreApply(PreferenceDialogModel model) {
+        model.clipboardDelayProperty().set(spinnerClipboardDelay.getValue());
     }
 }

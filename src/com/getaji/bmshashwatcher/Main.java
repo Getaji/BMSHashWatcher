@@ -65,7 +65,12 @@ public class Main extends Application {
             throw new IllegalStateException();
         }
 
-        clipboardWatcher = new ClipboardWatcher(1000);
+        if (config.getClipboardDelay() < 100) {
+            config.setClipboardDelay(1000);
+            trySaveConfig();
+        }
+
+        clipboardWatcher = new ClipboardWatcher(config.getClipboardDelay());
         clipboardWatcher.setCallback(this::onUpdateClipboard);
 
         beatorajaSongDataAccessor = new BeatorajaSongDataAccessor();
@@ -497,6 +502,9 @@ public class Main extends Application {
         config.setBeatorajaPath(model.getBeatorajaPath());
         config.setLr2Path(model.getLr2Path());
 
+        config.setClipboardDelay(model.getClipboardDelay());
+        clipboardWatcher.setDelay(model.getClipboardDelay());
+
         config.setWebServiceList(model.getWebServices());
 
         controller.constructContextMenu(config);
@@ -534,12 +542,14 @@ public class Main extends Application {
         model.useLR2DBProperty().set(config.isUseLR2DB());
         model.beatorajaPathProperty().set(config.getBeatorajaPath());
         model.lr2PathProperty().set(config.getLr2Path());
+        model.clipboardDelayProperty().set(config.getClipboardDelay());
         model.getWebServices().addAll(config.getWebServiceList());
 
         dialog.setOnCloseRequest(event -> {
             // APPLYボタンならイベントを使用することで閉じないようにする
             if (dialog.getResult() == ButtonType.APPLY) {
                 event.consume();
+                dialogController.onPreApply(model);
                 applyPreference(model);
             }
         });
@@ -547,6 +557,7 @@ public class Main extends Application {
         final Optional<ButtonType> result = dialog.showAndWait();
         result.ifPresent(buttonType -> {
             if (buttonType == ButtonType.OK) {
+                dialogController.onPreApply(model);
                 applyPreference(model);
             }
         });
