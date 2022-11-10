@@ -53,4 +53,12 @@ public class Either<L, R> {
             consumer.accept(rightValue);
         }
     }
+
+    public void ifRightOrElse(Consumer<R> rightConsumer, Consumer<L> leftConsumer) {
+        if (isRight()) {
+            rightConsumer.accept(rightValue);
+        } else {
+            leftConsumer.accept(leftValue);
+        }
+    }
 }
