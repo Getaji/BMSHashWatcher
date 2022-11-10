@@ -13,10 +13,12 @@ import java.util.function.Consumer;
  * 値を保持し、新たな値が文字列かつ異なる値なら状態を更新して通知する
  */
 public class ClipboardWatcher {
+    public static final int DELAY_LOWER_LIMIT = 100;
+
     private TimerTask timerTask;
     private Timer timer;
     private String value = "";
-    private final long delay;
+    private long delay;
     private boolean isRunning = false;
     private Consumer<String> callback;
 
@@ -98,5 +100,20 @@ public class ClipboardWatcher {
      */
     public boolean isRunning() {
         return isRunning;
+    }
+
+    public long getDelay() {
+        return delay;
+    }
+
+    public void setDelay(long delay) {
+        if (delay < DELAY_LOWER_LIMIT) {
+            throw new IllegalArgumentException("delay must be " + DELAY_LOWER_LIMIT + " or more");
+        }
+        this.delay = delay;
+        if (isRunning) {
+            stop();
+            start();
+        }
     }
 }

@@ -9,6 +9,7 @@ public class PreferenceDialogModel {
     private final BooleanProperty useLR2DB = new SimpleBooleanProperty();
     private final StringProperty beatorajaPath = new SimpleStringProperty();
     private final StringProperty lr2Path = new SimpleStringProperty();
+    private final IntegerProperty clipboardDelay = new SimpleIntegerProperty();
     private final ListProperty<WebService> webServices =
             new SimpleListProperty<>(FXCollections.observableArrayList());
 
@@ -50,5 +51,13 @@ public class PreferenceDialogModel {
 
     public ListProperty<WebService> webServicesProperty() {
         return webServices;
+    }
+
+    public int getClipboardDelay() {
+        return clipboardDelay.get();
+    }
+
+    public IntegerProperty clipboardDelayProperty() {
+        return clipboardDelay;
     }
 }

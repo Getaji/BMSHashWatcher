@@ -38,6 +38,8 @@ public class Config {
 
     private boolean enableWatchClipboard = false;
 
+    private int clipboardDelay = 1000;
+
     @JsonProperty("webServiceList")
     public List<WebService> getWebServiceList() {
         return webServiceList;
@@ -88,6 +90,15 @@ public class Config {
 
     public void setEnableWatchClipboard(boolean enableWatchClipboard) {
         this.enableWatchClipboard = enableWatchClipboard;
+    }
+
+    @JsonProperty("clipboardDelay")
+    public int getClipboardDelay() {
+        return clipboardDelay;
+    }
+
+    public void setClipboardDelay(int clipboardDelay) {
+        this.clipboardDelay = clipboardDelay;
     }
 
     /**
