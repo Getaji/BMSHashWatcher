@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -390,17 +391,16 @@ public class Main extends Application {
             return;
         }
 
-        // TODO 重複を削除
-
         final List<String> hashList = HashChecker.getHashPartAll(value);
+        final List<String> distinctHashList = new HashSet<>(hashList).stream().toList();
 
-        if (hashList.isEmpty()) return;
+        if (distinctHashList.isEmpty()) return;
 
         final ObservableList<BMSHashData> hashDataList = controller.getHashTableView().getItems();
 
         // TODO 既に存在する場合の処理
 
-        final List<SongDataAccessor.Request> requests = hashList.stream()
+        final List<SongDataAccessor.Request> requests = distinctHashList.stream()
                 .map(hash -> {
                     final boolean isMD5Hash = hash.length() == 32;
                     final BMSHashData hashData = new BMSHashData(
