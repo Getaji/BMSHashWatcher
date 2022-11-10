@@ -378,6 +378,7 @@ public class Main extends Application {
         }
         hashDataList.addAll(0, updatedHashDataList);
         controller.getHashTableView().getItems().setAll(hashDataList);
+        controller.info("データを取得しました");
     }
 
     /**
@@ -419,6 +420,7 @@ public class Main extends Application {
 
         if (!songDataPollingController.isDisableAll()) {
             try {
+                controller.info("ハッシュを検出しました。データを取得しています...");
                 songDataPollingController.pollAll(requests);
             } catch (ExecutionException e) {
                 // 例外を伴って完了
@@ -427,6 +429,8 @@ public class Main extends Application {
                 // 割り込まれた
                 throw new RuntimeException(e);
             }
+        } else {
+            controller.info("ハッシュを検出しました");
         }
     }
 
