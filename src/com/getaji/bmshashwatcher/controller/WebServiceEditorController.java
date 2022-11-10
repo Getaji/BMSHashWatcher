@@ -1,6 +1,5 @@
 package com.getaji.bmshashwatcher.controller;
 
-import com.getaji.bmshashwatcher.model.WebService;
 import com.getaji.bmshashwatcher.model.WebServiceEditorModel;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;

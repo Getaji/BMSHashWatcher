@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * beatorajaの楽曲データを取得するクラス
@@ -23,7 +25,8 @@ public class BeatorajaSongDataAccessor implements SongDataAccessor {
     }
 
     @Override
-    public void open(Config config) throws SQLException, ClassNotFoundException, IllegalStateException {
+    public void open(Config config) throws SQLException, ClassNotFoundException,
+            IllegalStateException {
         if (config.getBeatorajaPath().equals("")) {
             throw new IllegalStateException("beatorajaのパスが設定されていません");
         }
@@ -85,6 +88,59 @@ public class BeatorajaSongDataAccessor implements SongDataAccessor {
         statement.close();
         resultSet.close();
         return new Result(BMSHashData.HashType.SHA256, hash, songData);
+    }
+
+    @Override
+    public List<Result> findAll(List<Request> requests) throws SQLException {
+        final LinkedHashMap<BMSHashData.HashType, List<String>> groupedHashList =
+                requests.stream().collect(
+                Collectors.groupingBy(
+                        Request::hashType,
+                        LinkedHashMap::new,
+                        Collectors.mapping(Request::hash, Collectors.toList())
+                )
+        );
+        final List<String> md5HashList = groupedHashList.getOrDefault(BMSHashData.HashType.MD5,
+                Collections.emptyList());
+        final List<String> sha256HashList =
+                groupedHashList.getOrDefault(BMSHashData.HashType.SHA256, Collections.emptyList());
+        String queryBuilder = "SELECT DISTINCT md5, sha256, title, subtitle FROM song\n" +
+                "WHERE path <> ''\n" +
+                "AND (md5 IN (" +
+                String.join(",", Collections.nCopies(md5HashList.size(), "?")) +
+                ") OR sha256 IN (" +
+                String.join(",", Collections.nCopies(sha256HashList.size(), "?")) +
+                "))\n";
+        final PreparedStatement statement = connection.prepareStatement(queryBuilder);
+        for (int i = 0; i < md5HashList.size(); i++) {
+            statement.setString(i + 1, md5HashList.get(i));
+        }
+        for (int i = 0; i < sha256HashList.size(); i++) {
+            statement.setString(i + md5HashList.size() + 1, sha256HashList.get(i));
+        }
+        final ResultSet resultSet = statement.executeQuery();
+        List<Result> foundResults = new ArrayList<>();
+        while (resultSet.next()) {
+            final SongData songData = new SongData(
+                    resultSet.getString("md5"),
+                    resultSet.getString("sha256"),
+                    resultSet.getString("title"),
+                    resultSet.getString("subtitle")
+            );
+            final Optional<Request> request = requests.stream().filter(req -> req.hash().equals(
+                    req.hashType() == BMSHashData.HashType.MD5 ? songData.md5() : songData.sha256()
+            )).findFirst();
+            request.ifPresent(req -> foundResults.add(new Result(req.hashType(), req.hash(),
+                    songData)));
+        }
+        final List<Result> results = requests.stream().map(req -> foundResults.stream()
+                        .filter(res -> res.hash().equals(req.hash()))
+                        .findFirst()
+                        .orElse(new Result(req.hashType(), req.hash(), null)))
+                .toList();
+        statement.close();
+        resultSet.close();
+        return results;
     }
 
     @Override

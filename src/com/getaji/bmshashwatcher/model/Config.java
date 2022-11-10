@@ -10,7 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -19,10 +18,12 @@ import java.util.List;
  */
 public class Config {
     public static final List<WebService> DEFAULT_WEB_SERVICE_LIST = Arrays.asList(
-            new WebService("Mocha-Repository", "", "https://mocha-repository.info/song.php?sha256=%s"),
+            new WebService("Mocha-Repository", "", "https://mocha-repository.info/song" +
+                    ".php?sha256=%s"),
             new WebService("MinIR", "", "https://www.gaftalk.com/minir/#/viewer/song/%s/0"),
             new WebService("Cinnamon", "", "https://cinnamon.link/charts/%s"),
-            new WebService("LR2IR", "http://www.dream-pro.info/~lavalse/LR2IR/search.cgi?mode=ranking&bmsmd5=%s", "")
+            new WebService("LR2IR", "http://www.dream-pro.info/~lavalse/LR2IR/search" +
+                    ".cgi?mode=ranking&bmsmd5=%s", "")
     );
 
     private List<WebService> webServiceList = new ArrayList<>();
@@ -117,8 +118,9 @@ public class Config {
 
     /**
      * 設定をファイルに保存する
+     *
      * @param pathname ファイルのパス
-     * @param config 設定
+     * @param config   設定
      * @throws IOException 書き込みに失敗
      */
     public static void save(String pathname, Config config) throws IOException {

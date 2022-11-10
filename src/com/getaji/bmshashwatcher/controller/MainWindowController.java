@@ -1,10 +1,9 @@
 package com.getaji.bmshashwatcher.controller;
 
-import com.getaji.bmshashwatcher.*;
+import com.getaji.bmshashwatcher.Main;
 import com.getaji.bmshashwatcher.model.*;
 import com.getaji.bmshashwatcher.view.TypedMenuItem;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -50,12 +49,8 @@ public class MainWindowController {
         );
         hashTableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
-        md5HashColumn.setCellValueFactory(
-                data -> new SimpleStringProperty(data.getValue().getMD5Hash())
-        );
-        sha256HashColumn.setCellValueFactory(
-                data -> new SimpleStringProperty(data.getValue().getSHA256Hash())
-        );
+        md5HashColumn.setCellValueFactory(new PropertyValueFactory<>("md5Hash"));
+        sha256HashColumn.setCellValueFactory(new PropertyValueFactory<>("sha256Hash"));
     }
 
     @FXML
@@ -94,7 +89,8 @@ public class MainWindowController {
 
     @FXML
     public void onContextMenuRequested(ContextMenuEvent event) {
-        final ObservableList<BMSHashData> selectedItems = hashTableView.getSelectionModel().getSelectedItems();
+        final ObservableList<BMSHashData> selectedItems =
+                hashTableView.getSelectionModel().getSelectedItems();
         if (selectedItems.size() != 1) return;
         final BMSHashData hashData = selectedItems.get(0);
         contextMenu.getItems().forEach(item -> {
@@ -109,7 +105,8 @@ public class MainWindowController {
                 switch (webService.getSupportedHashType()) {
                     case MD5 -> item.setDisable(hashData.getMD5Hash().isEmpty());
                     case SHA256 -> item.setDisable(hashData.getSHA256Hash().isEmpty());
-                    case MD5_AND_SHA256 -> item.setDisable(hashData.getMD5Hash().isEmpty() && hashData.getSHA256Hash().isEmpty());
+                    case MD5_AND_SHA256 ->
+                            item.setDisable(hashData.getMD5Hash().isEmpty() && hashData.getSHA256Hash().isEmpty());
                     case NONE -> item.setDisable(true);
                 }
             } else {
@@ -125,6 +122,7 @@ public class MainWindowController {
     }
 
     public void bind(MainWindowModel model) {
+        hashTableView.itemsProperty().bindBidirectional(model.hashListProperty());
     }
 
     public void constructContextMenu(Config config) {
@@ -132,7 +130,8 @@ public class MainWindowController {
         final ObservableList<MenuItem> menuItems = contextMenu.getItems();
 
         config.getWebServiceList().forEach(webService -> {
-            final TypedMenuItem<WebService> item = new TypedMenuItem<>(webService.getTitle() + "で開く");
+            final TypedMenuItem<WebService> item = new TypedMenuItem<>(webService.getTitle() +
+                    "で開く");
             item.setValue(webService);
             item.setOnAction(ev -> hashTableView.getSelectionModel().getSelectedItems()
                     .forEach(webService::browse));

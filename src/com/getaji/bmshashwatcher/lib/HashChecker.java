@@ -14,15 +14,18 @@ public final class HashChecker {
         throw new UnsupportedOperationException("cannot be instantiated");
     }
 
-    public static final Pattern PATTERN_MD5 = Pattern.compile("^[a-f\\d]{32}$", Pattern.CASE_INSENSITIVE);
+    public static final Pattern PATTERN_MD5 = Pattern.compile("^[a-f\\d]{32}$",
+            Pattern.CASE_INSENSITIVE);
     public static final Pattern PATTERN_SHA256 = Pattern.compile("^[a-fA-F\\d]{64}$");
 
-    public static final Pattern PATTERN_MD5_PART = Pattern.compile("[a-f\\d]{32}", Pattern.CASE_INSENSITIVE);
+    public static final Pattern PATTERN_MD5_PART = Pattern.compile("[a-f\\d]{32}",
+            Pattern.CASE_INSENSITIVE);
     public static final Pattern PATTERN_SHA256_PART = Pattern.compile("[a-fA-F\\d]{64}");
     public static final Pattern PATTERN_PART = Pattern.compile("[a-fA-F\\d]{64}|[a-fA-F\\d]{32}");
 
     /**
      * 与えられた文字列がMD5ハッシュの形式に一致するかを返す
+     *
      * @param s 文字列
      * @return 一致するか
      */
@@ -32,6 +35,7 @@ public final class HashChecker {
 
     /**
      * 与えられた文字列がSHA-256ハッシュの形式に一致するかを返す
+     *
      * @param s 文字列
      * @return 一致するか
      */
@@ -41,6 +45,7 @@ public final class HashChecker {
 
     /**
      * 与えられた文字列にMD5ハッシュの形式に一致する文字列が含まれているかを返す
+     *
      * @param s 文字列
      * @return 含まれているか
      */
@@ -51,6 +56,7 @@ public final class HashChecker {
 
     /**
      * 与えられた文字列にSHA-256ハッシュの形式に一致する文字列が含まれているかを返す
+     *
      * @param s 文字列
      * @return 含まれているか
      */
