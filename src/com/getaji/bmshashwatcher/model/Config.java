@@ -19,11 +19,11 @@ import java.util.List;
 public class Config {
     public static final List<WebService> DEFAULT_WEB_SERVICE_LIST = Arrays.asList(
             new WebService("Mocha-Repository", "", "https://mocha-repository.info/song" +
-                    ".php?sha256=%s"),
-            new WebService("MinIR", "", "https://www.gaftalk.com/minir/#/viewer/song/%s/0"),
-            new WebService("Cinnamon", "", "https://cinnamon.link/charts/%s"),
+                    ".php?sha256=%h"),
+            new WebService("MinIR", "", "https://www.gaftalk.com/minir/#/viewer/song/%h/0"),
+            new WebService("Cinnamon", "", "https://cinnamon.link/charts/%h"),
             new WebService("LR2IR", "http://www.dream-pro.info/~lavalse/LR2IR/search" +
-                    ".cgi?mode=ranking&bmsmd5=%s", "")
+                    ".cgi?mode=ranking&bmsmd5=%h", "")
     );
 
     private List<WebService> webServiceList = new ArrayList<>();
@@ -115,8 +115,16 @@ public class Config {
             // TODO validate
             final String text = Files.readString(file.toPath());
             final ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(text, new TypeReference<>() {
+            final Config config = objectMapper.readValue(text, new TypeReference<>() {
             });
+
+            // 後方互換性
+            config.getWebServiceList().forEach(webService -> {
+                webService.setMD5UrlPattern(webService.getMD5UrlPattern().replace("%s", "%h"));
+                webService.setSHA256UrlPattern(webService.getSHA256UrlPattern().replace("%s", "%h"));
+            });
+
+            return config;
         } else {
             final Config config = new Config();
             config.getWebServiceList().addAll(DEFAULT_WEB_SERVICE_LIST);
