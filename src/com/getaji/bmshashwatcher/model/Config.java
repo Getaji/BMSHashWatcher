@@ -25,6 +25,9 @@ public class Config {
             new WebService("LR2IR", "http://www.dream-pro.info/~lavalse/LR2IR/search" +
                     ".cgi?mode=ranking&bmsmd5=%h", "")
     );
+    public static final int LATEST_CONFIG_VERSION = 1;
+
+    private int configVersion = 0;
 
     private List<WebService> webServiceList = new ArrayList<>();
 
@@ -39,6 +42,15 @@ public class Config {
     private boolean enableWatchClipboard = false;
 
     private int clipboardDelay = 1000;
+
+    @JsonProperty("configVersion")
+    public int getConfigVersion() {
+        return configVersion;
+    }
+
+    public void setConfigVersion(int configVersion) {
+        this.configVersion = configVersion;
+    }
 
     @JsonProperty("webServiceList")
     public List<WebService> getWebServiceList() {
@@ -101,6 +113,21 @@ public class Config {
         this.clipboardDelay = clipboardDelay;
     }
 
+    private static boolean migrate(Config config) {
+        boolean isMigrated = false;
+        if (config.configVersion < 1) {
+            config.getWebServiceList().forEach(webService -> {
+                webService.setMD5UrlPattern(webService.getMD5UrlPattern().replace("%s", "%h"));
+                webService.setSHA256UrlPattern(webService.getSHA256UrlPattern().replace("%s", "%h"));
+            });
+            isMigrated = true;
+        }
+        if (isMigrated) {
+            config.configVersion = LATEST_CONFIG_VERSION;
+        }
+        return isMigrated;
+    }
+
     /**
      * 設定をファイルから読み込んでConfigインスタンスを構築する
      *
@@ -118,16 +145,21 @@ public class Config {
             final Config config = objectMapper.readValue(text, new TypeReference<>() {
             });
 
-            // 後方互換性
-            config.getWebServiceList().forEach(webService -> {
-                webService.setMD5UrlPattern(webService.getMD5UrlPattern().replace("%s", "%h"));
-                webService.setSHA256UrlPattern(webService.getSHA256UrlPattern().replace("%s", "%h"));
-            });
+            final boolean isMigrated = migrate(config);
+
+            if (isMigrated) {
+                try {
+                    save(pathname, config);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
 
             return config;
         } else {
             final Config config = new Config();
             config.getWebServiceList().addAll(DEFAULT_WEB_SERVICE_LIST);
+            config.setConfigVersion(LATEST_CONFIG_VERSION);
             final ObjectMapper objectMapper = new ObjectMapper();
             final String text = objectMapper.writeValueAsString(config);
             Files.writeString(file.toPath(), text);
