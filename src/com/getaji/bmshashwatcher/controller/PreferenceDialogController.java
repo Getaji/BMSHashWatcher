@@ -52,7 +52,7 @@ public class PreferenceDialogController {
 
     private Dialog<ButtonType> dialog;
 
-    private Dialog<ButtonType> cacheDialogWebServiceEdit = null;
+    private final Dialog<ButtonType> cacheDialogWebServiceEdit = null;
 
     @FXML
     public void initialize() {
@@ -95,7 +95,8 @@ public class PreferenceDialogController {
     @FXML
     public void onClickWebService(MouseEvent event) {
         if (event.getClickCount() == 2) {
-            final WebService selectedService = tableWebService.getSelectionModel().getSelectedItem();
+            final WebService selectedService =
+                    tableWebService.getSelectionModel().getSelectedItem();
             if (selectedService != null) {
                 openWebServiceEditor(selectedService);
             }
@@ -180,7 +181,8 @@ public class PreferenceDialogController {
 
     private void openWebServiceEditor(WebService webService) {
         final Dialog<ButtonType> dialog = new Dialog<>();
-        final FXMLLoader rootLoader = new FXMLLoader(Main.class.getResource("fxml/WebServiceEditor.fxml"));
+        final FXMLLoader rootLoader = new FXMLLoader(Main.class.getResource("fxml" +
+                "/WebServiceEditor.fxml"));
         final Parent root;
         try {
             root = rootLoader.load();
@@ -202,9 +204,9 @@ public class PreferenceDialogController {
         model.md5UrlPatternProperty().set(webService.getMD5UrlPattern());
         model.sha256UrlPatternProperty().set(webService.getSHA256UrlPattern());
 
-        model.nameProperty().addListener((observable, oldValue, newValue) -> {
-            dialog.getDialogPane().lookupButton(ButtonType.OK).setDisable(newValue.isBlank());
-        });
+        model.nameProperty().addListener((observable, oldValue, newValue) ->
+                dialog.getDialogPane().lookupButton(ButtonType.OK).setDisable(newValue.isBlank())
+        );
         dialog.getDialogPane().lookupButton(ButtonType.OK).setDisable(webService.getTitle().isBlank());
 
         final Optional<ButtonType> result = dialog.showAndWait();
@@ -234,7 +236,8 @@ public class PreferenceDialogController {
         fieldLR2Path.textProperty().bindBidirectional(model.lr2PathProperty());
 
         model.beatorajaPathProperty().addListener((observable, oldValue, newValue) -> {
-            boolean isValid = newValue.isEmpty() || Main.getInstance().getBeatorajaSongDataAccessor().isValidPath(newValue);
+            boolean isValid =
+                    newValue.isEmpty() || Main.getInstance().getBeatorajaSongDataAccessor().isValidPath(newValue);
             switchErrorLabel(
                     labelErrorBeatorajaPath,
                     isValid ? "" : "データベースが見つかりません。"
@@ -242,7 +245,8 @@ public class PreferenceDialogController {
         });
 
         model.lr2PathProperty().addListener((observable, oldValue, newValue) -> {
-            boolean isValid = newValue.isEmpty() || Main.getInstance().getLr2SongDataAccessor().isValidPath(newValue);
+            boolean isValid =
+                    newValue.isEmpty() || Main.getInstance().getLr2SongDataAccessor().isValidPath(newValue);
             switchErrorLabel(
                     labelErrorLR2Path,
                     isValid ? "" : "データベースが見つかりません。"
