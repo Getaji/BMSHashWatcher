@@ -1,6 +1,7 @@
 package com.getaji.bmshashwatcher;
 
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
@@ -21,6 +22,7 @@ public class ClipboardWatcher {
     private long delay;
     private boolean isRunning = false;
     private Consumer<String> callback;
+    private boolean isFailedToGetBefore = false;
 
     /**
      * 監視間隔を指定してインスタンスを作成する
@@ -52,9 +54,13 @@ public class ClipboardWatcher {
             public void run() {
                 try {
                     updateClipboard();
+                    if (isFailedToGetBefore) {
+                        isFailedToGetBefore = false;
+                        Main.getInstance().getController().info("");
+                    }
                 } catch (IllegalStateException e) {
-                    Main.getInstance().getController().error("クリップボードを参照できません");
-                    e.printStackTrace();
+                    isFailedToGetBefore = true;
+                    Main.getInstance().getController().error("クリップボードからデータを取得できません");
                 }
             }
         };
