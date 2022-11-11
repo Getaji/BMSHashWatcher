@@ -245,7 +245,7 @@ public class Main extends Application {
             }
 
             // ディレクトリの確認
-            if (accessor.isValidPath(selectedDirectory.getPath())) {
+            if (!accessor.isValidPath(selectedDirectory.getPath())) {
                 final Alert errorAlert = new Alert(Alert.AlertType.ERROR);
                 errorAlert.setTitle("エラー");
                 errorAlert.setHeaderText(
