@@ -33,7 +33,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 public class Main extends Application {
-    public static final String APP_VERSION = "0.3.0";
+    public static final String APP_VERSION = "0.3.1";
 
     private static Main INSTANCE;
 
