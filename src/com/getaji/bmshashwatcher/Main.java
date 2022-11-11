@@ -125,8 +125,8 @@ public class Main extends Application {
         if (appState.isFirstBoot()) {
             final Alert alertInfo = new Alert(Alert.AlertType.INFORMATION);
             alertInfo.setTitle("案内");
-            alertInfo.setHeaderText("beatorajaまたはLR2のBMS" +
-                    "データを参照する場合、ファイルメニューからそれぞれのルートフォルダを選択してください");
+            alertInfo.setHeaderText("beatorajaまたはLR2のBMSデータを参照する場合、\n" +
+                    "ファイルメニューからそれぞれのルートフォルダを選択してください");
             alertInfo.showAndWait();
 
             final Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
