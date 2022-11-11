@@ -33,7 +33,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 public class Main extends Application {
-    public static final String APP_VERSION = "0.3.0";
+    public static final String APP_VERSION = "0.3.1";
 
     private static Main INSTANCE;
 
@@ -125,8 +125,8 @@ public class Main extends Application {
         if (appState.isFirstBoot()) {
             final Alert alertInfo = new Alert(Alert.AlertType.INFORMATION);
             alertInfo.setTitle("案内");
-            alertInfo.setHeaderText("beatorajaまたはLR2のBMS" +
-                    "データを参照する場合、ファイルメニューからそれぞれのルートフォルダを選択してください");
+            alertInfo.setHeaderText("beatorajaまたはLR2のBMSデータを参照する場合、\n" +
+                    "ファイルメニューからそれぞれのルートフォルダを選択してください");
             alertInfo.showAndWait();
 
             final Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -245,7 +245,7 @@ public class Main extends Application {
             }
 
             // ディレクトリの確認
-            if (accessor.isValidPath(selectedDirectory.getPath())) {
+            if (!accessor.isValidPath(selectedDirectory.getPath())) {
                 final Alert errorAlert = new Alert(Alert.AlertType.ERROR);
                 errorAlert.setTitle("エラー");
                 errorAlert.setHeaderText(
