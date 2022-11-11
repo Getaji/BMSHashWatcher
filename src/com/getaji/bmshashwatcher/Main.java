@@ -1,8 +1,15 @@
 package com.getaji.bmshashwatcher;
 
+import com.getaji.bmshashwatcher.controller.MainWindowController;
+import com.getaji.bmshashwatcher.controller.PreferenceDialogController;
+import com.getaji.bmshashwatcher.db.BeatorajaSongDataAccessor;
+import com.getaji.bmshashwatcher.db.LR2SongDataAccessor;
+import com.getaji.bmshashwatcher.db.SongDataAccessor;
+import com.getaji.bmshashwatcher.db.SongDataPollingController;
+import com.getaji.bmshashwatcher.lib.HashChecker;
+import com.getaji.bmshashwatcher.model.*;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -10,7 +17,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
-import javafx.scene.control.TableView;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -20,12 +26,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 public class Main extends Application {
-    public static final String APP_VERSION = "0.2.0";
+    public static final String APP_VERSION = "0.3.0";
 
     private static Main INSTANCE;
 
@@ -57,7 +65,13 @@ public class Main extends Application {
             throw new IllegalStateException();
         }
 
-        clipboardWatcher = new ClipboardWatcher(1000);
+        if (config.getClipboardDelay() < 100) {
+            config.setClipboardDelay(1000);
+            trySaveConfig();
+        }
+
+        clipboardWatcher = new ClipboardWatcher(config.getClipboardDelay());
+        clipboardWatcher.setCallback(this::onUpdateClipboard);
 
         beatorajaSongDataAccessor = new BeatorajaSongDataAccessor();
         lr2SongDataAccessor = new LR2SongDataAccessor();
@@ -65,10 +79,16 @@ public class Main extends Application {
         songDataPollingController = new SongDataPollingController();
         songDataPollingController
                 .addAccessor(beatorajaSongDataAccessor)
-                .setEnable(!config.getBeatorajaPath().equals(""));
+                .setEnable(!config.getBeatorajaPath().isEmpty() && config.isUseBeatorajaDB());
         songDataPollingController
                 .addAccessor(lr2SongDataAccessor)
-                .setEnable(!config.getLr2Path().equals(""));
+                .setEnable(!config.getLr2Path().isEmpty() && config.isUseLR2DB());
+
+        songDataPollingController.setMultipleConsumer(multipleResult -> {
+            synchronized (songDataPollingController) {
+                onCompleteSongDataPolling(multipleResult);
+            }
+        });
     }
 
     public static Main getInstance() {
@@ -81,7 +101,8 @@ public class Main extends Application {
 
         primaryStage.setTitle("BMS Hash Watcher v" + APP_VERSION);
 
-        final FXMLLoader rootLoader = new FXMLLoader(getClass().getResource("MainWindow.fxml"));
+        final FXMLLoader rootLoader = new FXMLLoader(getClass().getResource("fxml/MainWindow" +
+                ".fxml"));
         final Parent root;
         try {
             root = rootLoader.load();
@@ -96,20 +117,16 @@ public class Main extends Application {
         controller.constructContextMenu(config);
         controller.setPrimaryStage(primaryStage);
 
-        final TableView<BMSHashData> tableView = controller.getHashTableView();
-        final ObservableList<BMSHashData> hashDataList = FXCollections.observableArrayList();
-        tableView.setItems(hashDataList);
+        final MainWindowModel model = new MainWindowModel();
+        controller.bind(model);
 
         primaryStage.show();
-
-        songDataPollingController.setConsumer(this::onCompleteSongDataPolling);
-
-        clipboardWatcher.setCallback(this::onUpdateClipboard);
 
         if (appState.isFirstBoot()) {
             final Alert alertInfo = new Alert(Alert.AlertType.INFORMATION);
             alertInfo.setTitle("案内");
-            alertInfo.setHeaderText("beatorajaまたはLR2のBMSデータを参照する場合、ファイルメニューからそれぞれのルートフォルダを選択してください");
+            alertInfo.setHeaderText("beatorajaまたはLR2のBMS" +
+                    "データを参照する場合、ファイルメニューからそれぞれのルートフォルダを選択してください");
             alertInfo.showAndWait();
 
             final Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -133,6 +150,7 @@ public class Main extends Application {
     /**
      * 設定の保存を試みる。
      * 失敗した場合は確認ダイアログを表示し、OKが選択された場合は再試行する。
+     *
      * @return 保存に成功したか
      */
     @SuppressWarnings("UnusedReturnValue")
@@ -160,6 +178,7 @@ public class Main extends Application {
     /**
      * 設定の読み込みを試みる。
      * 失敗した場合は確認ダイアログを表示し、OKが選択された場合は再試行する。
+     *
      * @return 読み込みに成功したか
      */
     public Config tryLoadConfig() {
@@ -253,6 +272,7 @@ public class Main extends Application {
 
     /**
      * beatorajaフォルダを選択するダイアログを表示する。
+     *
      * @param owner ダイアログのオーナーウィンドウ
      * @return 選択されたか
      */
@@ -262,6 +282,7 @@ public class Main extends Application {
 
     /**
      * LR2フォルダを選択するダイアログを表示する。
+     *
      * @param owner ダイアログのオーナーウィンドウ
      * @return 選択されたか
      */
@@ -270,102 +291,152 @@ public class Main extends Application {
     }
 
     /**
+     * どちらかの空文字ではないハッシュがBMSHashDataのハッシュと一致すればtrueを返す
+     */
+    private boolean isResponseMatchesEitherHash(BMSHashData hashData,
+                                                SongDataAccessor.Result result) {
+        final SongData songData = result.songData();
+        if (songData == null) {
+            return (result.hashType() == BMSHashData.HashType.MD5 && result.hash().equals(hashData.getMD5Hash()))
+                    || (result.hashType() == BMSHashData.HashType.SHA256 && result.hash().equals(hashData.getSHA256Hash()));
+        }
+        return (!songData.md5().isEmpty() && songData.md5().equals(hashData.getMD5Hash()))
+                || (!songData.sha256().isEmpty() && songData.sha256().equals(hashData.getSHA256Hash()));
+    }
+
+    /**
      * 楽曲データの取得が完了した時に呼び出されるメソッド
      * SongDataPollingControllerに登録される
      */
-    private void onCompleteSongDataPolling(SongDataPollingController.Result result) {
-        final ObservableList<BMSHashData> hashDataList = controller.getHashTableView().getItems();
-        final SongData songData = result.data().songData();
-        final List<Integer> restDataIndices = new ArrayList<>();
-        boolean isFound = false;
+    private void onCompleteSongDataPolling(SongDataPollingController.MultipleResult multipleResult) {
+        final List<BMSHashData> hashDataList =
+                new ArrayList<>(controller.getHashTableView().getItems());
 
-        for (int i = 0; i < hashDataList.size(); i++) {
-            final BMSHashData hashData = hashDataList.get(i);
+        if (multipleResult.data().isEmpty()) return;
 
-            // すでに更新済みの場合は重複を削除する準備
-            if (isFound) {
-                switch (result.data().hashType()) {
-                    case MD5 -> {
-                        if (!hashData.getSHA256Hash().equals("")
-                                && hashData.getSHA256Hash().equals(songData.sha256())) {
-                            restDataIndices.add(i);
-                        }
+        // 走査後に先頭に追加するやつ
+        final List<BMSHashData> updatedHashDataList = new ArrayList<>();
+
+        // 既存のハッシュリストを検索
+        // 追加済みフラグがONでハッシュのどちらかが一致すれば削除
+        // リストになければ先頭に追加して追加済みフラグをONにして続行
+        // リストにあれば取り出してデータを更新し、先頭に移動して追加済みフラグをONにして続行
+        // ハッシュの一致とは：
+        // 結果の楽曲データがnullならリクエスト時のデータに一致
+        //
+        for (int ri = 0; ri < multipleResult.data().size(); ri++) {
+            final SongDataAccessor.Result result = multipleResult.data().get(ri);
+            final SongData resultSong = result.songData();
+            boolean isFound = false;
+
+            // 既存のハッシュリストを逆順に探索（削除のため）
+            for (int hi = hashDataList.size() - 1; hi >= 0; hi--) {
+                final BMSHashData hashData = hashDataList.get(hi);
+
+                // 検出2件目以降は削除のみ
+                if (isFound) {
+                    if (isResponseMatchesEitherHash(hashData, result)) {
+                        hashDataList.remove(hi);
                     }
-                    case SHA256 -> {
-                        if (!hashData.getMD5Hash().equals("")
-                                && hashData.getMD5Hash().equals(songData.md5())) {
-                            restDataIndices.add(i);
-                        }
-                    }
+                    continue;
                 }
-                continue;
-            }
 
-            // 更新済みでない
-            if (
-                    (result.data().hashType() == BMSHashData.HashType.MD5 && hashData.getMD5Hash().equals(result.data().hash()))
-                            || result.data().hashType() == BMSHashData.HashType.SHA256 && hashData.getSHA256Hash().equals(result.data().hash())
-            ) {
-                if (songData == null) {
-                    hashDataList.set(i, new BMSHashData("未登録のBMS", hashData.getMD5Hash(), hashData.getSHA256Hash()));
-                    break;
-                } else {
-                    hashDataList.set(i, new BMSHashData(songData.getTitleFull(), songData.md5(), songData.sha256()));
+                // 既存の要素に一致
+                if (isResponseMatchesEitherHash(hashData, result)) {
+                    if (resultSong == null) {
+                        if (hashData.getTitle().equals("取得中...")) {
+                            hashData.setTitle("不明のBMS");
+                            hashDataList.remove(hi);
+                            updatedHashDataList.add(hashData);
+                        }
+                    } else {
+                        hashData.setTitle(resultSong.getTitleFull());
+                        if (!resultSong.md5().isEmpty()) {
+                            hashData.setMD5Hash(resultSong.md5());
+                        }
+                        if (!resultSong.sha256().isEmpty()) {
+                            hashData.setSHA256Hash(resultSong.sha256());
+                        }
+                        hashDataList.remove(hi);
+                        updatedHashDataList.add(hashData);
+                    }
+
                     isFound = true;
                 }
             }
+
+            if (!isFound) {
+                if (resultSong == null) {
+                    updatedHashDataList.add(new BMSHashData(
+                            "不明のBMS",
+                            result.hashType() == BMSHashData.HashType.MD5 ? result.hash() : "",
+                            result.hashType() == BMSHashData.HashType.SHA256 ? result.hash() : ""
+                    ));
+                } else {
+                    updatedHashDataList.add(new BMSHashData(
+                            resultSong.getTitleFull(),
+                            resultSong.md5(),
+                            resultSong.sha256()
+                    ));
+                }
+            }
         }
-        for (int i = restDataIndices.size() - 1; i >= 0; i--) {
-            hashDataList.remove(i, i + 1);
-        }
+        hashDataList.addAll(0, updatedHashDataList);
+        controller.getHashTableView().getItems().setAll(hashDataList);
+        controller.info("データを取得しました");
     }
 
     /**
      * クリップボードのデータが更新されたら呼び出されるメソッド
      * ClipboardWatcherに登録される
      */
-    private void onUpdateClipboard(String value) {
+    private synchronized void onUpdateClipboard(String value) {
         // このアプリがコピーしたデータなら無視
         if (appState.isCopyWithThisAppJustBefore()) {
             appState.setCopyWithThisAppJustBefore(false);
             return;
         }
 
-        final Optional<String> sha256 = HashChecker.getSHA256HashPart(value);
-        final Optional<String> md5 = HashChecker.getMD5HashPart(value);
+        final List<String> hashList = HashChecker.getHashPartAll(value);
+        final List<String> distinctHashList = new HashSet<>(hashList).stream().toList();
 
-        if (sha256.isEmpty() && md5.isEmpty()) return;
+        if (distinctHashList.isEmpty()) return;
 
         final ObservableList<BMSHashData> hashDataList = controller.getHashTableView().getItems();
 
-        // 既存のリストを検索し、存在すれば一番上に移動
-        for (BMSHashData hashData : hashDataList) {
-            if ((sha256.isPresent() && hashData.getSHA256Hash().equals(sha256.get()))
-                    || (md5.isPresent() && hashData.getMD5Hash().equals(md5.get()))
-            ) {
-                hashDataList.remove(hashData);
-                hashDataList.add(0, hashData);
+        // TODO 既に存在する場合の処理
+
+        final List<SongDataAccessor.Request> requests = distinctHashList.stream()
+                .map(hash -> {
+                    final boolean isMD5Hash = hash.length() == 32;
+                    final BMSHashData hashData = new BMSHashData(
+                            "取得中...",
+                            isMD5Hash ? hash : "",
+                            isMD5Hash ? "" : hash
+                    );
+                    if (songDataPollingController.isDisableAll()) {
+                        hashData.setTitle("不明のBMS");
+                    }
+                    controller.getHashTableView().getItems().add(hashData);
+                    return new SongDataAccessor.Request(isMD5Hash ? BMSHashData.HashType.MD5 :
+                            BMSHashData.HashType.SHA256, hash);
+                })
+                .toList();
+
+        if (!songDataPollingController.isDisableAll()) {
+            try {
+                controller.info("ハッシュを検出しました。データを取得しています...");
+                songDataPollingController.pollAll(requests);
+            } catch (ExecutionException e) {
+                // 例外を伴って完了
+                throw new RuntimeException(e);
+            } catch (InterruptedException e) {
+                // 割り込まれた
+                throw new RuntimeException(e);
             }
-        }
-
-        // 楽曲データを取得
-
-        if (songDataPollingController.getPollers().size() == 0) {
-            hashDataList.add(0, new BMSHashData("不明のBMS"));
-            return;
-        }
-
-        final BMSHashData hashData = new BMSHashData("取得中...");
-
-        if (sha256.isPresent()) {
-            hashData.setSHA56Hash(sha256.get());
-            songDataPollingController.poll(BMSHashData.HashType.SHA256, sha256.get());
         } else {
-            hashData.setMD5Hash(md5.get());
-            songDataPollingController.poll(BMSHashData.HashType.MD5, md5.get());
+            controller.info("ハッシュを検出しました");
         }
-
-        hashDataList.add(0, hashData);
     }
 
     public Config getConfig() {
@@ -382,6 +453,7 @@ public class Main extends Application {
 
     /**
      * クリップボードの監視状態を切り替え、メッセージを表示し、設定を保存する
+     *
      * @param isEnable 監視するか
      */
     public void setEnableClipboardWatcher(boolean isEnable) {
@@ -398,6 +470,7 @@ public class Main extends Application {
 
     /**
      * 設定をアプリケーションに適用する
+     *
      * @param model 設定ダイアログのモデルデータ
      */
     public void applyPreference(PreferenceDialogModel model) {
@@ -428,6 +501,15 @@ public class Main extends Application {
         config.setUseLR2DB(model.isUseLR2DB());
         config.setBeatorajaPath(model.getBeatorajaPath());
         config.setLr2Path(model.getLr2Path());
+
+        config.setClipboardDelay(model.getClipboardDelay());
+        clipboardWatcher.setDelay(model.getClipboardDelay());
+
+        config.setWebServiceList(model.getWebServices());
+
+        controller.constructContextMenu(config);
+
+        trySaveConfig();
     }
 
     /**
@@ -435,7 +517,8 @@ public class Main extends Application {
      */
     public void openPreference() {
         final Dialog<ButtonType> dialog = new Dialog<>();
-        final FXMLLoader rootLoader = new FXMLLoader(Main.class.getResource("PreferenceDialog.fxml"));
+        final FXMLLoader rootLoader = new FXMLLoader(Main.class.getResource("fxml" +
+                "/PreferenceDialog.fxml"));
         final Parent root;
         try {
             root = rootLoader.load();
@@ -443,7 +526,9 @@ public class Main extends Application {
             throw new RuntimeException(e);
         }
         dialog.setTitle("設定");
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.APPLY, ButtonType.CANCEL);
+        dialog.setResizable(true);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.APPLY,
+                ButtonType.CANCEL);
         dialog.getDialogPane().setContent(root);
 
         // controller <-> model
@@ -457,11 +542,14 @@ public class Main extends Application {
         model.useLR2DBProperty().set(config.isUseLR2DB());
         model.beatorajaPathProperty().set(config.getBeatorajaPath());
         model.lr2PathProperty().set(config.getLr2Path());
+        model.clipboardDelayProperty().set(config.getClipboardDelay());
+        model.getWebServices().addAll(config.getWebServiceList());
 
         dialog.setOnCloseRequest(event -> {
             // APPLYボタンならイベントを使用することで閉じないようにする
             if (dialog.getResult() == ButtonType.APPLY) {
                 event.consume();
+                dialogController.onPreApply(model);
                 applyPreference(model);
             }
         });
@@ -469,6 +557,7 @@ public class Main extends Application {
         final Optional<ButtonType> result = dialog.showAndWait();
         result.ifPresent(buttonType -> {
             if (buttonType == ButtonType.OK) {
+                dialogController.onPreApply(model);
                 applyPreference(model);
             }
         });

@@ -1,12 +1,9 @@
 package com.getaji.bmshashwatcher;
 
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Consumer;
@@ -16,16 +13,19 @@ import java.util.function.Consumer;
  * 値を保持し、新たな値が文字列かつ異なる値なら状態を更新して通知する
  */
 public class ClipboardWatcher {
-    private final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+    public static final int DELAY_LOWER_LIMIT = 100;
+
     private TimerTask timerTask;
     private Timer timer;
     private String value = "";
-    private final long delay;
+    private long delay;
     private boolean isRunning = false;
     private Consumer<String> callback;
+    private boolean isFailedToGetBefore = false;
 
     /**
      * 監視間隔を指定してインスタンスを作成する
+     *
      * @param delay 監視間隔（ミリ秒）
      */
     public ClipboardWatcher(long delay) {
@@ -35,6 +35,7 @@ public class ClipboardWatcher {
     /**
      * クリップボードのデータが更新された時に呼び出される関数を設定する
      * データを文字列に変換できない、またはデータに変更がない場合は呼び出されない
+     *
      * @param callback 関数
      */
     public void setCallback(Consumer<String> callback) {
@@ -52,9 +53,13 @@ public class ClipboardWatcher {
             public void run() {
                 try {
                     updateClipboard();
+                    if (isFailedToGetBefore) {
+                        isFailedToGetBefore = false;
+                        Main.getInstance().getController().info("");
+                    }
                 } catch (IllegalStateException e) {
-                    Main.getInstance().getController().error("クリップボードを参照できません");
-                    e.printStackTrace();
+                    isFailedToGetBefore = true;
+                    Main.getInstance().getController().error("クリップボードからデータを取得できません");
                 }
             }
         };
@@ -82,7 +87,7 @@ public class ClipboardWatcher {
     private void updateClipboard() throws IllegalStateException {
         final String data;
         try {
-            data = clipboard.getData(DataFlavor.stringFlavor).toString();
+            data = Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.stringFlavor).toString();
         } catch (UnsupportedFlavorException | IOException e) {
             // 画像データなど文字列に変換できないタイプのデータは無視
             return;
@@ -95,9 +100,25 @@ public class ClipboardWatcher {
 
     /**
      * クリップボードを監視中か
-     * @return
+     *
+     * @return 監視中
      */
     public boolean isRunning() {
         return isRunning;
+    }
+
+    public long getDelay() {
+        return delay;
+    }
+
+    public void setDelay(long delay) {
+        if (delay < DELAY_LOWER_LIMIT) {
+            throw new IllegalArgumentException("delay must be " + DELAY_LOWER_LIMIT + " or more");
+        }
+        this.delay = delay;
+        if (isRunning) {
+            stop();
+            start();
+        }
     }
 }

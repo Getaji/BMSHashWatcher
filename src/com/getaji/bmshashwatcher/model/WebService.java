@@ -1,12 +1,17 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.model;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.getaji.bmshashwatcher.Main;
+import com.getaji.bmshashwatcher.lib.Either;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 
 import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Optional;
 
 public class WebService {
     private String title;
@@ -53,29 +58,39 @@ public class WebService {
         this.sha256UrlPattern = sha256UrlPattern;
     }
 
+    private String createUrl(String pattern, BMSHashData.HashType hashType, BMSHashData data) {
+        final String hash;
+        switch (hashType) {
+            case MD5 -> hash = data.getMD5Hash();
+            case SHA256 -> hash = data.getSHA256Hash();
+            default -> throw new IllegalArgumentException();
+        }
+        return pattern.replace("%h", hash).replace("%t", data.getTitle());
+    }
+
     @JsonIgnore
     public Either<String, String> getURL(BMSHashData data) {
         switch (getSupportedHashType()) {
             case MD5 -> {
                 if (data.getMD5Hash().equals("")) {
-                    return Either.left("md5 is null");
+                    return Either.left("このデータにはMD5ハッシュがありません");
                 }
-                return Either.right(md5UrlPattern.replace("%s", data.getMD5Hash()));
+                return Either.right(createUrl(md5UrlPattern, BMSHashData.HashType.MD5, data));
             }
             case SHA256 -> {
                 if (data.getSHA256Hash().equals("")) {
-                    return Either.left("sha256 is null");
+                    return Either.left("このデータにはSHA256ハッシュがありません");
                 }
-                return Either.right(sha256UrlPattern.replace("%s", data.getSHA256Hash()));
+                return Either.right(createUrl(sha256UrlPattern, BMSHashData.HashType.SHA256, data));
             }
             case MD5_AND_SHA256 -> {
                 if (data.getMD5Hash().equals("") && data.getSHA256Hash().equals("")) {
-                    return Either.left("hash is null");
+                    return Either.left("このデータにはハッシュがありません");
                 }
                 if (!data.getMD5Hash().equals("")) {
-                    return Either.right(md5UrlPattern.replace("%s", data.getMD5Hash()));
+                    return Either.right(createUrl(md5UrlPattern, BMSHashData.HashType.MD5, data));
                 }
-                return Either.right(sha256UrlPattern.replace("%s", data.getSHA256Hash()));
+                return Either.right(createUrl(sha256UrlPattern, BMSHashData.HashType.SHA256, data));
             }
             default -> throw new IllegalStateException("illegal WebService supported hash type");
         }
@@ -96,7 +111,7 @@ public class WebService {
     }
 
     public void browse(BMSHashData hashData) {
-        getURL(hashData).ifRight(url -> {
+        getURL(hashData).ifRightOrElse(url -> {
             try {
                 Desktop.getDesktop().browse(URI.create(url));
             } catch (IOException e) {
@@ -105,6 +120,8 @@ public class WebService {
                 );
                 e.printStackTrace();
             }
+        }, message -> {
+            Main.getInstance().getController().error(message);
         });
     }
 }

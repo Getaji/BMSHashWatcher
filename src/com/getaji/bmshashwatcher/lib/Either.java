@@ -1,9 +1,10 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.lib;
 
 import java.util.function.Consumer;
 
 /**
  * 2つのどちらかの型の値を保持するコンテナクラス
+ *
  * @param <L> 「左」の値。慣例的にエラーなどが格納される
  * @param <R> 「右」の値。慣例的に成功値などが格納される
  */
@@ -50,6 +51,14 @@ public class Either<L, R> {
     public void ifRight(Consumer<R> consumer) {
         if (isRight()) {
             consumer.accept(rightValue);
+        }
+    }
+
+    public void ifRightOrElse(Consumer<R> rightConsumer, Consumer<L> leftConsumer) {
+        if (isRight()) {
+            rightConsumer.accept(rightValue);
+        } else {
+            leftConsumer.accept(leftValue);
         }
     }
 }

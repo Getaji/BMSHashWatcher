@@ -1,4 +1,4 @@
-package com.getaji.bmshashwatcher;
+package com.getaji.bmshashwatcher.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -17,6 +17,18 @@ import java.util.List;
  * Jacksonで変換可能
  */
 public class Config {
+    public static final List<WebService> DEFAULT_WEB_SERVICE_LIST = Arrays.asList(
+            new WebService("Mocha-Repository", "", "https://mocha-repository.info/song" +
+                    ".php?sha256=%h"),
+            new WebService("MinIR", "", "https://www.gaftalk.com/minir/#/viewer/song/%h/0"),
+            new WebService("Cinnamon", "", "https://cinnamon.link/charts/%h"),
+            new WebService("LR2IR", "http://www.dream-pro.info/~lavalse/LR2IR/search" +
+                    ".cgi?mode=ranking&bmsmd5=%h", "")
+    );
+    public static final int LATEST_CONFIG_VERSION = 1;
+
+    private int configVersion = 0;
+
     private List<WebService> webServiceList = new ArrayList<>();
 
     private String beatorajaPath = "";
@@ -28,6 +40,17 @@ public class Config {
     private boolean useLR2DB = true;
 
     private boolean enableWatchClipboard = false;
+
+    private int clipboardDelay = 1000;
+
+    @JsonProperty("configVersion")
+    public int getConfigVersion() {
+        return configVersion;
+    }
+
+    public void setConfigVersion(int configVersion) {
+        this.configVersion = configVersion;
+    }
 
     @JsonProperty("webServiceList")
     public List<WebService> getWebServiceList() {
@@ -81,6 +104,30 @@ public class Config {
         this.enableWatchClipboard = enableWatchClipboard;
     }
 
+    @JsonProperty("clipboardDelay")
+    public int getClipboardDelay() {
+        return clipboardDelay;
+    }
+
+    public void setClipboardDelay(int clipboardDelay) {
+        this.clipboardDelay = clipboardDelay;
+    }
+
+    private static boolean migrate(Config config) {
+        boolean isMigrated = false;
+        if (config.configVersion < 1) {
+            config.getWebServiceList().forEach(webService -> {
+                webService.setMD5UrlPattern(webService.getMD5UrlPattern().replace("%s", "%h"));
+                webService.setSHA256UrlPattern(webService.getSHA256UrlPattern().replace("%s", "%h"));
+            });
+            isMigrated = true;
+        }
+        if (isMigrated) {
+            config.configVersion = LATEST_CONFIG_VERSION;
+        }
+        return isMigrated;
+    }
+
     /**
      * 設定をファイルから読み込んでConfigインスタンスを構築する
      *
@@ -95,17 +142,24 @@ public class Config {
             // TODO validate
             final String text = Files.readString(file.toPath());
             final ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.readValue(text, new TypeReference<>() {
+            final Config config = objectMapper.readValue(text, new TypeReference<>() {
             });
+
+            final boolean isMigrated = migrate(config);
+
+            if (isMigrated) {
+                try {
+                    save(pathname, config);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            return config;
         } else {
             final Config config = new Config();
-            Collections.addAll(
-                    config.getWebServiceList(),
-                    new WebService("Mocha-Repository", "", "https://mocha-repository.info/song.php?sha256=%s"),
-                    new WebService("MinIR", "", "https://www.gaftalk.com/minir/#/viewer/song/%s/0"),
-                    new WebService("Cinnamon", "", "https://cinnamon.link/charts/%s"),
-                    new WebService("LR2IR", "http://www.dream-pro.info/~lavalse/LR2IR/search.cgi?mode=ranking&bmsmd5=%s", "")
-            );
+            config.getWebServiceList().addAll(DEFAULT_WEB_SERVICE_LIST);
+            config.setConfigVersion(LATEST_CONFIG_VERSION);
             final ObjectMapper objectMapper = new ObjectMapper();
             final String text = objectMapper.writeValueAsString(config);
             Files.writeString(file.toPath(), text);
@@ -115,8 +169,9 @@ public class Config {
 
     /**
      * 設定をファイルに保存する
+     *
      * @param pathname ファイルのパス
-     * @param config 設定
+     * @param config   設定
      * @throws IOException 書き込みに失敗
      */
     public static void save(String pathname, Config config) throws IOException {
