@@ -35,7 +35,7 @@ public class BeatorajaSongDataAccessor implements SongDataAccessor {
         final SQLiteConfig sqliteConfig = new SQLiteConfig();
         sqliteConfig.setReadOnly(true);
         final Path dbPath = Paths.get(config.getBeatorajaPath()).resolve("songdata.db");
-        connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+        connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath, sqliteConfig.toProperties());
     }
 
     @Override
