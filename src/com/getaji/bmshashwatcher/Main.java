@@ -133,7 +133,9 @@ public class Main extends Application {
             alert.setTitle("確認");
             alert.setHeaderText("クリップボードの監視を開始しますか？");
             Optional<ButtonType> confirmResult = alert.showAndWait();
-            config.setEnableWatchClipboard(confirmResult.isPresent());
+            config.setEnableWatchClipboard(
+                    confirmResult.isPresent() && confirmResult.get() == ButtonType.OK
+            );
 
             trySaveConfig();
         }
