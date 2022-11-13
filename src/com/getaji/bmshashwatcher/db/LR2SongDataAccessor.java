@@ -35,7 +35,7 @@ public class LR2SongDataAccessor implements SongDataAccessor {
         final SQLiteConfig sqliteConfig = new SQLiteConfig();
         sqliteConfig.setReadOnly(true);
         final Path dbPath = Paths.get(config.getLr2Path()).resolve("LR2files/Database/song.db");
-        connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath);
+        connection = DriverManager.getConnection("jdbc:sqlite:" + dbPath, sqliteConfig.toProperties());
     }
 
     @Override
